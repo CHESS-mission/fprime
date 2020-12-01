@@ -56,16 +56,20 @@ namespace Svc {
     this->eventHistory_ALOG_ID_FILTER_NOT_FOUND =
       new History<EventEntry_ALOG_ID_FILTER_NOT_FOUND>(maxHistorySize);
     // Initialize histories for typed user output ports
+    this->fromPortHistory_LogSend =
+      new History<FromPortEntry_LogSend>(maxHistorySize);
     this->fromPortHistory_PktSend =
       new History<FromPortEntry_PktSend>(maxHistorySize);
     this->fromPortHistory_FatalAnnounce =
       new History<FromPortEntry_FatalAnnounce>(maxHistorySize);
+    this->fromPortHistory_pingOut =
+      new History<FromPortEntry_pingOut>(maxHistorySize);
     // Clear history
     this->clearHistory();
   }
 
   ActiveLoggerTesterBase ::
-    ~ActiveLoggerTesterBase(void) 
+    ~ActiveLoggerTesterBase(void)
   {
     // Destroy command history
     delete this->cmdResponseHistory;
@@ -80,6 +84,14 @@ namespace Svc {
     delete this->eventHistory_ALOG_ID_FILTER_LIST_FULL;
     delete this->eventHistory_ALOG_ID_FILTER_REMOVED;
     delete this->eventHistory_ALOG_ID_FILTER_NOT_FOUND;
+    // Destroy port histories
+    delete this->fromPortHistory_LogSend;
+    // Destroy port histories
+    delete this->fromPortHistory_PktSend;
+    // Destroy port histories
+    delete this->fromPortHistory_FatalAnnounce;
+    // Destroy port histories
+    delete this->fromPortHistory_pingOut;
   }
 
   void ActiveLoggerTesterBase ::
@@ -91,6 +103,35 @@ namespace Svc {
     // Initialize base class
 
 		Fw::PassiveComponentBase::init(instance);
+
+    // Attach input port LogSend
+
+    for (
+        NATIVE_INT_TYPE _port = 0;
+        _port < this->getNum_from_LogSend();
+        ++_port
+    ) {
+
+      this->m_from_LogSend[_port].init();
+      this->m_from_LogSend[_port].addCallComp(
+          this,
+          from_LogSend_static
+      );
+      this->m_from_LogSend[_port].setPortNum(_port);
+
+#if FW_OBJECT_NAMES == 1
+      char _portName[120];
+      (void) snprintf(
+          _portName,
+          sizeof(_portName),
+          "%s_from_LogSend[%d]",
+          this->m_objName,
+          _port
+      );
+      this->m_from_LogSend[_port].setObjName(_portName);
+#endif
+
+    }
 
     // Attach input port PktSend
 
@@ -108,7 +149,7 @@ namespace Svc {
       this->m_from_PktSend[_port].setPortNum(_port);
 
 #if FW_OBJECT_NAMES == 1
-      char _portName[80];
+      char _portName[120];
       (void) snprintf(
           _portName,
           sizeof(_portName),
@@ -137,7 +178,7 @@ namespace Svc {
       this->m_from_FatalAnnounce[_port].setPortNum(_port);
 
 #if FW_OBJECT_NAMES == 1
-      char _portName[80];
+      char _portName[120];
       (void) snprintf(
           _portName,
           sizeof(_portName),
@@ -146,6 +187,35 @@ namespace Svc {
           _port
       );
       this->m_from_FatalAnnounce[_port].setObjName(_portName);
+#endif
+
+    }
+
+    // Attach input port pingOut
+
+    for (
+        NATIVE_INT_TYPE _port = 0;
+        _port < this->getNum_from_pingOut();
+        ++_port
+    ) {
+
+      this->m_from_pingOut[_port].init();
+      this->m_from_pingOut[_port].addCallComp(
+          this,
+          from_pingOut_static
+      );
+      this->m_from_pingOut[_port].setPortNum(_port);
+
+#if FW_OBJECT_NAMES == 1
+      char _portName[120];
+      (void) snprintf(
+          _portName,
+          sizeof(_portName),
+          "%s_from_pingOut[%d]",
+          this->m_objName,
+          _port
+      );
+      this->m_from_pingOut[_port].setObjName(_portName);
 #endif
 
     }
@@ -166,7 +236,7 @@ namespace Svc {
       this->m_from_CmdStatus[_port].setPortNum(_port);
 
 #if FW_OBJECT_NAMES == 1
-      char _portName[80];
+      char _portName[120];
       (void) snprintf(
           _portName,
           sizeof(_portName),
@@ -195,7 +265,7 @@ namespace Svc {
       this->m_from_CmdReg[_port].setPortNum(_port);
 
 #if FW_OBJECT_NAMES == 1
-      char _portName[80];
+      char _portName[120];
       (void) snprintf(
           _portName,
           sizeof(_portName),
@@ -224,7 +294,7 @@ namespace Svc {
       this->m_from_Time[_port].setPortNum(_port);
 
 #if FW_OBJECT_NAMES == 1
-      char _portName[80];
+      char _portName[120];
       (void) snprintf(
           _portName,
           sizeof(_portName),
@@ -253,7 +323,7 @@ namespace Svc {
       this->m_from_Log[_port].setPortNum(_port);
 
 #if FW_OBJECT_NAMES == 1
-      char _portName[80];
+      char _portName[120];
       (void) snprintf(
           _portName,
           sizeof(_portName),
@@ -283,7 +353,7 @@ namespace Svc {
       this->m_from_LogText[_port].setPortNum(_port);
 
 #if FW_OBJECT_NAMES == 1
-      char _portName[80];
+      char _portName[120];
       (void) snprintf(
           _portName,
           sizeof(_portName),
@@ -307,7 +377,7 @@ namespace Svc {
       this->m_to_LogRecv[_port].init();
 
 #if FW_OBJECT_NAMES == 1
-      char _portName[80];
+      char _portName[120];
       snprintf(
           _portName,
           sizeof(_portName),
@@ -316,6 +386,29 @@ namespace Svc {
           _port
       );
       this->m_to_LogRecv[_port].setObjName(_portName);
+#endif
+
+    }
+
+    // Initialize output port pingIn
+
+    for (
+        NATIVE_INT_TYPE _port = 0;
+        _port < this->getNum_to_pingIn();
+        ++_port
+    ) {
+      this->m_to_pingIn[_port].init();
+
+#if FW_OBJECT_NAMES == 1
+      char _portName[120];
+      snprintf(
+          _portName,
+          sizeof(_portName),
+          "%s_to_pingIn[%d]",
+          this->m_objName,
+          _port
+      );
+      this->m_to_pingIn[_port].setObjName(_portName);
 #endif
 
     }
@@ -333,6 +426,12 @@ namespace Svc {
   }
 
   NATIVE_INT_TYPE ActiveLoggerTesterBase ::
+    getNum_from_LogSend(void) const
+  {
+    return (NATIVE_INT_TYPE) FW_NUM_ARRAY_ELEMENTS(this->m_from_LogSend);
+  }
+
+  NATIVE_INT_TYPE ActiveLoggerTesterBase ::
     getNum_from_PktSend(void) const
   {
     return (NATIVE_INT_TYPE) FW_NUM_ARRAY_ELEMENTS(this->m_from_PktSend);
@@ -342,6 +441,18 @@ namespace Svc {
     getNum_from_FatalAnnounce(void) const
   {
     return (NATIVE_INT_TYPE) FW_NUM_ARRAY_ELEMENTS(this->m_from_FatalAnnounce);
+  }
+
+  NATIVE_INT_TYPE ActiveLoggerTesterBase ::
+    getNum_to_pingIn(void) const
+  {
+    return (NATIVE_INT_TYPE) FW_NUM_ARRAY_ELEMENTS(this->m_to_pingIn);
+  }
+
+  NATIVE_INT_TYPE ActiveLoggerTesterBase ::
+    getNum_from_pingOut(void) const
+  {
+    return (NATIVE_INT_TYPE) FW_NUM_ARRAY_ELEMENTS(this->m_from_pingOut);
   }
 
   NATIVE_INT_TYPE ActiveLoggerTesterBase ::
@@ -383,24 +494,34 @@ namespace Svc {
 #endif
 
   // ----------------------------------------------------------------------
-  // Connectors for to ports 
+  // Connectors for to ports
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
     connect_to_LogRecv(
         const NATIVE_INT_TYPE portNum,
         Fw::InputLogPort *const LogRecv
-    ) 
+    )
   {
     FW_ASSERT(portNum < this->getNum_to_LogRecv(),static_cast<AssertArg>(portNum));
     this->m_to_LogRecv[portNum].addCallPort(LogRecv);
   }
 
   void ActiveLoggerTesterBase ::
+    connect_to_pingIn(
+        const NATIVE_INT_TYPE portNum,
+        Svc::InputPingPort *const pingIn
+    )
+  {
+    FW_ASSERT(portNum < this->getNum_to_pingIn(),static_cast<AssertArg>(portNum));
+    this->m_to_pingIn[portNum].addCallPort(pingIn);
+  }
+
+  void ActiveLoggerTesterBase ::
     connect_to_CmdDisp(
         const NATIVE_INT_TYPE portNum,
         Fw::InputCmdPort *const CmdDisp
-    ) 
+    )
   {
     FW_ASSERT(portNum < this->getNum_to_CmdDisp(),static_cast<AssertArg>(portNum));
     this->m_to_CmdDisp[portNum].addCallPort(CmdDisp);
@@ -427,6 +548,19 @@ namespace Svc {
     );
   }
 
+  void ActiveLoggerTesterBase ::
+    invoke_to_pingIn(
+        const NATIVE_INT_TYPE portNum,
+        U32 key
+    )
+  {
+    FW_ASSERT(portNum < this->getNum_to_pingIn(),static_cast<AssertArg>(portNum));
+    FW_ASSERT(portNum < this->getNum_to_pingIn(),static_cast<AssertArg>(portNum));
+    this->m_to_pingIn[portNum].invoke(
+        key
+    );
+  }
+
   // ----------------------------------------------------------------------
   // Connection status for to ports
   // ----------------------------------------------------------------------
@@ -439,6 +573,13 @@ namespace Svc {
   }
 
   bool ActiveLoggerTesterBase ::
+    isConnected_to_pingIn(const NATIVE_INT_TYPE portNum)
+  {
+    FW_ASSERT(portNum < this->getNum_to_pingIn(), static_cast<AssertArg>(portNum));
+    return this->m_to_pingIn[portNum].isConnected();
+  }
+
+  bool ActiveLoggerTesterBase ::
     isConnected_to_CmdDisp(const NATIVE_INT_TYPE portNum)
   {
     FW_ASSERT(portNum < this->getNum_to_CmdDisp(), static_cast<AssertArg>(portNum));
@@ -448,7 +589,14 @@ namespace Svc {
   // ----------------------------------------------------------------------
   // Getters for from ports
   // ----------------------------------------------------------------------
- 
+
+  Fw::InputLogPort *ActiveLoggerTesterBase ::
+    get_from_LogSend(const NATIVE_INT_TYPE portNum)
+  {
+    FW_ASSERT(portNum < this->getNum_from_LogSend(),static_cast<AssertArg>(portNum));
+    return &this->m_from_LogSend[portNum];
+  }
+
   Fw::InputComPort *ActiveLoggerTesterBase ::
     get_from_PktSend(const NATIVE_INT_TYPE portNum)
   {
@@ -461,6 +609,13 @@ namespace Svc {
   {
     FW_ASSERT(portNum < this->getNum_from_FatalAnnounce(),static_cast<AssertArg>(portNum));
     return &this->m_from_FatalAnnounce[portNum];
+  }
+
+  Svc::InputPingPort *ActiveLoggerTesterBase ::
+    get_from_pingOut(const NATIVE_INT_TYPE portNum)
+  {
+    FW_ASSERT(portNum < this->getNum_from_pingOut(),static_cast<AssertArg>(portNum));
+    return &this->m_from_pingOut[portNum];
   }
 
   Fw::InputCmdResponsePort *ActiveLoggerTesterBase ::
@@ -505,6 +660,25 @@ namespace Svc {
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
+    from_LogSend_static(
+        Fw::PassiveComponentBase *const callComp,
+        const NATIVE_INT_TYPE portNum,
+        FwEventIdType id,
+        Fw::Time &timeTag,
+        Fw::LogSeverity severity,
+        Fw::LogBuffer &args
+    )
+  {
+    FW_ASSERT(callComp);
+    ActiveLoggerTesterBase* _testerBase =
+      static_cast<ActiveLoggerTesterBase*>(callComp);
+    _testerBase->from_LogSend_handlerBase(
+        portNum,
+        id, timeTag, severity, args
+    );
+  }
+
+  void ActiveLoggerTesterBase ::
     from_PktSend_static(
         Fw::PassiveComponentBase *const callComp,
         const NATIVE_INT_TYPE portNum,
@@ -513,7 +687,7 @@ namespace Svc {
     )
   {
     FW_ASSERT(callComp);
-    ActiveLoggerTesterBase* _testerBase = 
+    ActiveLoggerTesterBase* _testerBase =
       static_cast<ActiveLoggerTesterBase*>(callComp);
     _testerBase->from_PktSend_handlerBase(
         portNum,
@@ -529,11 +703,27 @@ namespace Svc {
     )
   {
     FW_ASSERT(callComp);
-    ActiveLoggerTesterBase* _testerBase = 
+    ActiveLoggerTesterBase* _testerBase =
       static_cast<ActiveLoggerTesterBase*>(callComp);
     _testerBase->from_FatalAnnounce_handlerBase(
         portNum,
         Id
+    );
+  }
+
+  void ActiveLoggerTesterBase ::
+    from_pingOut_static(
+        Fw::PassiveComponentBase *const callComp,
+        const NATIVE_INT_TYPE portNum,
+        U32 key
+    )
+  {
+    FW_ASSERT(callComp);
+    ActiveLoggerTesterBase* _testerBase =
+      static_cast<ActiveLoggerTesterBase*>(callComp);
+    _testerBase->from_pingOut_handlerBase(
+        portNum,
+        key
     );
   }
 
@@ -613,13 +803,34 @@ namespace Svc {
     clearFromPortHistory(void)
   {
     this->fromPortHistorySize = 0;
+    this->fromPortHistory_LogSend->clear();
     this->fromPortHistory_PktSend->clear();
     this->fromPortHistory_FatalAnnounce->clear();
+    this->fromPortHistory_pingOut->clear();
   }
 
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
+  // From port: LogSend
+  // ----------------------------------------------------------------------
+
+  void ActiveLoggerTesterBase ::
+    pushFromPortEntry_LogSend(
+        FwEventIdType id,
+        Fw::Time &timeTag,
+        Fw::LogSeverity severity,
+        Fw::LogBuffer &args
+    )
+  {
+    FromPortEntry_LogSend _e = {
+      id, timeTag, severity, args
+    };
+    this->fromPortHistory_LogSend->push_back(_e);
+    ++this->fromPortHistorySize;
+  }
+
+  // ----------------------------------------------------------------------
   // From port: PktSend
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
     pushFromPortEntry_PktSend(
@@ -634,9 +845,9 @@ namespace Svc {
     ++this->fromPortHistorySize;
   }
 
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
   // From port: FatalAnnounce
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
     pushFromPortEntry_FatalAnnounce(
@@ -651,8 +862,40 @@ namespace Svc {
   }
 
   // ----------------------------------------------------------------------
+  // From port: pingOut
+  // ----------------------------------------------------------------------
+
+  void ActiveLoggerTesterBase ::
+    pushFromPortEntry_pingOut(
+        U32 key
+    )
+  {
+    FromPortEntry_pingOut _e = {
+      key
+    };
+    this->fromPortHistory_pingOut->push_back(_e);
+    ++this->fromPortHistorySize;
+  }
+
+  // ----------------------------------------------------------------------
   // Handler base functions for from ports
   // ----------------------------------------------------------------------
+
+  void ActiveLoggerTesterBase ::
+    from_LogSend_handlerBase(
+        const NATIVE_INT_TYPE portNum,
+        FwEventIdType id,
+        Fw::Time &timeTag,
+        Fw::LogSeverity severity,
+        Fw::LogBuffer &args
+    )
+  {
+    FW_ASSERT(portNum < this->getNum_from_LogSend(),static_cast<AssertArg>(portNum));
+    this->from_LogSend_handler(
+        portNum,
+        id, timeTag, severity, args
+    );
+  }
 
   void ActiveLoggerTesterBase ::
     from_PktSend_handlerBase(
@@ -681,6 +924,19 @@ namespace Svc {
     );
   }
 
+  void ActiveLoggerTesterBase ::
+    from_pingOut_handlerBase(
+        const NATIVE_INT_TYPE portNum,
+        U32 key
+    )
+  {
+    FW_ASSERT(portNum < this->getNum_from_pingOut(),static_cast<AssertArg>(portNum));
+    this->from_pingOut_handler(
+        portNum,
+        key
+    );
+  }
+
   // ----------------------------------------------------------------------
   // Command response handling
   // ----------------------------------------------------------------------
@@ -696,9 +952,9 @@ namespace Svc {
     this->cmdResponseHistory->push_back(e);
   }
 
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
   // Command: ALOG_SET_EVENT_REPORT_FILTER
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
     sendCmd_ALOG_SET_EVENT_REPORT_FILTER(
@@ -719,7 +975,7 @@ namespace Svc {
     FW_ASSERT(_status == Fw::FW_SERIALIZE_OK,static_cast<AssertArg>(_status));
 
     // Call output command port
-    
+
     FwOpcodeType _opcode;
     const U32 idBase = this->getIdBase();
     _opcode = ActiveLoggerComponentBase::OPCODE_ALOG_SET_EVENT_REPORT_FILTER + idBase;
@@ -737,9 +993,9 @@ namespace Svc {
 
   }
 
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
   // Command: ALOG_SET_EVENT_SEND_FILTER
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
     sendCmd_ALOG_SET_EVENT_SEND_FILTER(
@@ -760,7 +1016,7 @@ namespace Svc {
     FW_ASSERT(_status == Fw::FW_SERIALIZE_OK,static_cast<AssertArg>(_status));
 
     // Call output command port
-    
+
     FwOpcodeType _opcode;
     const U32 idBase = this->getIdBase();
     _opcode = ActiveLoggerComponentBase::OPCODE_ALOG_SET_EVENT_SEND_FILTER + idBase;
@@ -778,9 +1034,9 @@ namespace Svc {
 
   }
 
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
   // Command: ALOG_DUMP_EVENT_LOG
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
     sendCmd_ALOG_DUMP_EVENT_LOG(
@@ -798,7 +1054,7 @@ namespace Svc {
     FW_ASSERT(_status == Fw::FW_SERIALIZE_OK,static_cast<AssertArg>(_status));
 
     // Call output command port
-    
+
     FwOpcodeType _opcode;
     const U32 idBase = this->getIdBase();
     _opcode = ActiveLoggerComponentBase::OPCODE_ALOG_DUMP_EVENT_LOG + idBase;
@@ -816,9 +1072,9 @@ namespace Svc {
 
   }
 
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
   // Command: ALOG_SET_ID_FILTER
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
     sendCmd_ALOG_SET_ID_FILTER(
@@ -839,7 +1095,7 @@ namespace Svc {
     FW_ASSERT(_status == Fw::FW_SERIALIZE_OK,static_cast<AssertArg>(_status));
 
     // Call output command port
-    
+
     FwOpcodeType _opcode;
     const U32 idBase = this->getIdBase();
     _opcode = ActiveLoggerComponentBase::OPCODE_ALOG_SET_ID_FILTER + idBase;
@@ -857,9 +1113,9 @@ namespace Svc {
 
   }
 
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
   // Command: ALOG_DUMP_FILTER_STATE
-  // ---------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
     sendCmd_ALOG_DUMP_FILTER_STATE(
@@ -873,7 +1129,7 @@ namespace Svc {
     Fw::CmdArgBuffer buff;
 
     // Call output command port
-    
+
     FwOpcodeType _opcode;
     const U32 idBase = this->getIdBase();
     _opcode = ActiveLoggerComponentBase::OPCODE_ALOG_DUMP_FILTER_STATE + idBase;
@@ -891,11 +1147,11 @@ namespace Svc {
 
   }
 
-  
+
   void ActiveLoggerTesterBase ::
     sendRawCmd(FwOpcodeType opcode, U32 cmdSeq, Fw::CmdArgBuffer& args) {
-       
-    const U32 idBase = this->getIdBase();   
+
+    const U32 idBase = this->getIdBase();
     FwOpcodeType _opcode = opcode + idBase;
     if (this->m_to_CmdDisp[0].isConnected()) {
       this->m_to_CmdDisp[0].invoke(
@@ -907,11 +1163,11 @@ namespace Svc {
     else {
       printf("Test Command Output port not connected!\n");
     }
-        
+
   }
-  
+
   // ----------------------------------------------------------------------
-  // History 
+  // History
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
@@ -952,10 +1208,34 @@ namespace Svc {
     FW_ASSERT(id >= idBase, id, idBase);
     switch (id - idBase) {
 
-      case ActiveLoggerComponentBase::EVENTID_ALOG_FILE_WRITE_ERR: 
+      case ActiveLoggerComponentBase::EVENTID_ALOG_FILE_WRITE_ERR:
       {
 
-        Fw::SerializeStatus _status;
+        Fw::SerializeStatus _status = Fw::FW_SERIALIZE_OK;
+#if FW_AMPCS_COMPATIBLE
+        // Deserialize the number of arguments.
+        U8 _numArgs;
+        _status = args.deserialize(_numArgs);
+        FW_ASSERT(
+          _status == Fw::FW_SERIALIZE_OK,
+          static_cast<AssertArg>(_status)
+        );
+        // verify they match expected.
+        FW_ASSERT(_numArgs == 2,_numArgs,2);
+
+#endif
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(FwEnumStoreType),_argSize,sizeof(FwEnumStoreType));
+        }
+#endif
         FwEnumStoreType stageInt;
         _status = args.deserialize(stageInt);
         ActiveLoggerComponentBase::LogWriteError stage = static_cast<ActiveLoggerComponentBase::LogWriteError>(stageInt);
@@ -965,6 +1245,18 @@ namespace Svc {
         );
 
         I32 error;
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(I32),_argSize,sizeof(I32));
+        }
+#endif
         _status = args.deserialize(error);
         FW_ASSERT(
             _status == Fw::FW_SERIALIZE_OK,
@@ -977,11 +1269,35 @@ namespace Svc {
 
       }
 
-      case ActiveLoggerComponentBase::EVENTID_ALOG_FILE_WRITE_COMPLETE: 
+      case ActiveLoggerComponentBase::EVENTID_ALOG_FILE_WRITE_COMPLETE:
       {
 
-        Fw::SerializeStatus _status;
+        Fw::SerializeStatus _status = Fw::FW_SERIALIZE_OK;
+#if FW_AMPCS_COMPATIBLE
+        // Deserialize the number of arguments.
+        U8 _numArgs;
+        _status = args.deserialize(_numArgs);
+        FW_ASSERT(
+          _status == Fw::FW_SERIALIZE_OK,
+          static_cast<AssertArg>(_status)
+        );
+        // verify they match expected.
+        FW_ASSERT(_numArgs == 1,_numArgs,1);
+
+#endif
         U32 records;
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(U32),_argSize,sizeof(U32));
+        }
+#endif
         _status = args.deserialize(records);
         FW_ASSERT(
             _status == Fw::FW_SERIALIZE_OK,
@@ -994,10 +1310,34 @@ namespace Svc {
 
       }
 
-      case ActiveLoggerComponentBase::EVENTID_ALOG_SEVERITY_FILTER_STATE: 
+      case ActiveLoggerComponentBase::EVENTID_ALOG_SEVERITY_FILTER_STATE:
       {
 
-        Fw::SerializeStatus _status;
+        Fw::SerializeStatus _status = Fw::FW_SERIALIZE_OK;
+#if FW_AMPCS_COMPATIBLE
+        // Deserialize the number of arguments.
+        U8 _numArgs;
+        _status = args.deserialize(_numArgs);
+        FW_ASSERT(
+          _status == Fw::FW_SERIALIZE_OK,
+          static_cast<AssertArg>(_status)
+        );
+        // verify they match expected.
+        FW_ASSERT(_numArgs == 3,_numArgs,3);
+
+#endif
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(FwEnumStoreType),_argSize,sizeof(FwEnumStoreType));
+        }
+#endif
         FwEnumStoreType severityInt;
         _status = args.deserialize(severityInt);
         ActiveLoggerComponentBase::EventFilterState severity = static_cast<ActiveLoggerComponentBase::EventFilterState>(severityInt);
@@ -1007,6 +1347,18 @@ namespace Svc {
         );
 
         bool recvEnabled;
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(bool),_argSize,sizeof(bool));
+        }
+#endif
         _status = args.deserialize(recvEnabled);
         FW_ASSERT(
             _status == Fw::FW_SERIALIZE_OK,
@@ -1014,6 +1366,18 @@ namespace Svc {
         );
 
         bool sendEnabled;
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(bool),_argSize,sizeof(bool));
+        }
+#endif
         _status = args.deserialize(sendEnabled);
         FW_ASSERT(
             _status == Fw::FW_SERIALIZE_OK,
@@ -1026,11 +1390,35 @@ namespace Svc {
 
       }
 
-      case ActiveLoggerComponentBase::EVENTID_ALOG_ID_FILTER_ENABLED: 
+      case ActiveLoggerComponentBase::EVENTID_ALOG_ID_FILTER_ENABLED:
       {
 
-        Fw::SerializeStatus _status;
+        Fw::SerializeStatus _status = Fw::FW_SERIALIZE_OK;
+#if FW_AMPCS_COMPATIBLE
+        // Deserialize the number of arguments.
+        U8 _numArgs;
+        _status = args.deserialize(_numArgs);
+        FW_ASSERT(
+          _status == Fw::FW_SERIALIZE_OK,
+          static_cast<AssertArg>(_status)
+        );
+        // verify they match expected.
+        FW_ASSERT(_numArgs == 1,_numArgs,1);
+
+#endif
         U32 ID;
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(U32),_argSize,sizeof(U32));
+        }
+#endif
         _status = args.deserialize(ID);
         FW_ASSERT(
             _status == Fw::FW_SERIALIZE_OK,
@@ -1043,11 +1431,35 @@ namespace Svc {
 
       }
 
-      case ActiveLoggerComponentBase::EVENTID_ALOG_ID_FILTER_LIST_FULL: 
+      case ActiveLoggerComponentBase::EVENTID_ALOG_ID_FILTER_LIST_FULL:
       {
 
-        Fw::SerializeStatus _status;
+        Fw::SerializeStatus _status = Fw::FW_SERIALIZE_OK;
+#if FW_AMPCS_COMPATIBLE
+        // Deserialize the number of arguments.
+        U8 _numArgs;
+        _status = args.deserialize(_numArgs);
+        FW_ASSERT(
+          _status == Fw::FW_SERIALIZE_OK,
+          static_cast<AssertArg>(_status)
+        );
+        // verify they match expected.
+        FW_ASSERT(_numArgs == 1,_numArgs,1);
+
+#endif
         U32 ID;
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(U32),_argSize,sizeof(U32));
+        }
+#endif
         _status = args.deserialize(ID);
         FW_ASSERT(
             _status == Fw::FW_SERIALIZE_OK,
@@ -1060,11 +1472,35 @@ namespace Svc {
 
       }
 
-      case ActiveLoggerComponentBase::EVENTID_ALOG_ID_FILTER_REMOVED: 
+      case ActiveLoggerComponentBase::EVENTID_ALOG_ID_FILTER_REMOVED:
       {
 
-        Fw::SerializeStatus _status;
+        Fw::SerializeStatus _status = Fw::FW_SERIALIZE_OK;
+#if FW_AMPCS_COMPATIBLE
+        // Deserialize the number of arguments.
+        U8 _numArgs;
+        _status = args.deserialize(_numArgs);
+        FW_ASSERT(
+          _status == Fw::FW_SERIALIZE_OK,
+          static_cast<AssertArg>(_status)
+        );
+        // verify they match expected.
+        FW_ASSERT(_numArgs == 1,_numArgs,1);
+
+#endif
         U32 ID;
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(U32),_argSize,sizeof(U32));
+        }
+#endif
         _status = args.deserialize(ID);
         FW_ASSERT(
             _status == Fw::FW_SERIALIZE_OK,
@@ -1077,11 +1513,35 @@ namespace Svc {
 
       }
 
-      case ActiveLoggerComponentBase::EVENTID_ALOG_ID_FILTER_NOT_FOUND: 
+      case ActiveLoggerComponentBase::EVENTID_ALOG_ID_FILTER_NOT_FOUND:
       {
 
-        Fw::SerializeStatus _status;
+        Fw::SerializeStatus _status = Fw::FW_SERIALIZE_OK;
+#if FW_AMPCS_COMPATIBLE
+        // Deserialize the number of arguments.
+        U8 _numArgs;
+        _status = args.deserialize(_numArgs);
+        FW_ASSERT(
+          _status == Fw::FW_SERIALIZE_OK,
+          static_cast<AssertArg>(_status)
+        );
+        // verify they match expected.
+        FW_ASSERT(_numArgs == 1,_numArgs,1);
+
+#endif
         U32 ID;
+#if FW_AMPCS_COMPATIBLE
+        {
+          // Deserialize the argument size
+          U8 _argSize;
+          _status = args.deserialize(_argSize);
+          FW_ASSERT(
+            _status == Fw::FW_SERIALIZE_OK,
+            static_cast<AssertArg>(_status)
+          );
+          FW_ASSERT(_argSize == sizeof(U32),_argSize,sizeof(U32));
+        }
+#endif
         _status = args.deserialize(ID);
         FW_ASSERT(
             _status == Fw::FW_SERIALIZE_OK,
@@ -1119,7 +1579,7 @@ namespace Svc {
 #if FW_ENABLE_TEXT_LOGGING
 
   // ----------------------------------------------------------------------
-  // Text events 
+  // Text events
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
@@ -1142,25 +1602,25 @@ namespace Svc {
   {
     const char *severityString = "UNKNOWN";
     switch (e.severity) {
-      case Fw::LOG_FATAL:
+      case Fw::TEXT_LOG_FATAL:
         severityString = "FATAL";
         break;
-      case Fw::LOG_WARNING_HI:
+      case Fw::TEXT_LOG_WARNING_HI:
         severityString = "WARNING_HI";
         break;
-      case Fw::LOG_WARNING_LO:
+      case Fw::TEXT_LOG_WARNING_LO:
         severityString = "WARNING_LO";
         break;
-      case Fw::LOG_COMMAND:
+      case Fw::TEXT_LOG_COMMAND:
         severityString = "COMMAND";
         break;
-      case Fw::LOG_ACTIVITY_HI:
+      case Fw::TEXT_LOG_ACTIVITY_HI:
         severityString = "ACTIVITY_HI";
         break;
-      case Fw::LOG_ACTIVITY_LO:
+      case Fw::TEXT_LOG_ACTIVITY_LO:
         severityString = "ACTIVITY_LO";
         break;
-      case Fw::LOG_DIAGNOSTIC:
+      case Fw::TEXT_LOG_DIAGNOSTIC:
        severityString = "DIAGNOSTIC";
         break;
       default:
@@ -1182,11 +1642,11 @@ namespace Svc {
   }
 
   void ActiveLoggerTesterBase ::
-    printTextLogHistory(FILE *file) 
+    printTextLogHistory(FILE *file)
   {
     for (U32 i = 0; i < this->textLogHistory->size(); ++i) {
       this->printTextLogHistoryEntry(
-          this->textLogHistory->at(i), 
+          this->textLogHistory->at(i),
           file
       );
     }
@@ -1195,7 +1655,7 @@ namespace Svc {
 #endif
 
   // ----------------------------------------------------------------------
-  // Event: ALOG_FILE_WRITE_ERR 
+  // Event: ALOG_FILE_WRITE_ERR
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
@@ -1212,7 +1672,7 @@ namespace Svc {
   }
 
   // ----------------------------------------------------------------------
-  // Event: ALOG_FILE_WRITE_COMPLETE 
+  // Event: ALOG_FILE_WRITE_COMPLETE
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
@@ -1228,7 +1688,7 @@ namespace Svc {
   }
 
   // ----------------------------------------------------------------------
-  // Event: ALOG_SEVERITY_FILTER_STATE 
+  // Event: ALOG_SEVERITY_FILTER_STATE
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
@@ -1246,7 +1706,7 @@ namespace Svc {
   }
 
   // ----------------------------------------------------------------------
-  // Event: ALOG_ID_FILTER_ENABLED 
+  // Event: ALOG_ID_FILTER_ENABLED
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
@@ -1262,7 +1722,7 @@ namespace Svc {
   }
 
   // ----------------------------------------------------------------------
-  // Event: ALOG_ID_FILTER_LIST_FULL 
+  // Event: ALOG_ID_FILTER_LIST_FULL
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
@@ -1278,7 +1738,7 @@ namespace Svc {
   }
 
   // ----------------------------------------------------------------------
-  // Event: ALOG_ID_FILTER_REMOVED 
+  // Event: ALOG_ID_FILTER_REMOVED
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::
@@ -1294,7 +1754,7 @@ namespace Svc {
   }
 
   // ----------------------------------------------------------------------
-  // Event: ALOG_ID_FILTER_NOT_FOUND 
+  // Event: ALOG_ID_FILTER_NOT_FOUND
   // ----------------------------------------------------------------------
 
   void ActiveLoggerTesterBase ::

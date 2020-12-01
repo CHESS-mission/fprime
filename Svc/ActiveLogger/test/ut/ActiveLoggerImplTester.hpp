@@ -31,6 +31,13 @@ namespace Svc {
             void runFileDumpErrors(void);
 
         private:
+            void from_LogSend_handler(
+                const NATIVE_INT_TYPE portNum, /*!< The port number*/
+                FwEventIdType id, /*!< Log ID*/
+                Fw::Time &timeTag, /*!< Time Tag*/
+                Fw::LogSeverity severity, /*!< The severity argument*/
+                Fw::LogBuffer &args /*!< Buffer containing serialized log entry*/
+            );
 
             void from_PktSend_handler(
                     const NATIVE_INT_TYPE portNum, //!< The port number
