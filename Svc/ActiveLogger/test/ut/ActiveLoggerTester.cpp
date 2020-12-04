@@ -28,6 +28,7 @@ void connectPorts(Svc::ActiveLoggerImpl& impl, Svc::ActiveLoggerImplTester& test
     impl.set_LogText_OutputPort(0,tester.get_from_LogText(0));
 
     impl.set_PktSend_OutputPort(0,tester.get_from_PktSend(0));
+    impl.set_LogSend_OutputPort(0, tester.get_from_LogSend(0));
 
 #if FW_PORT_TRACING
     // Fw::PortBase::setTrace(true);

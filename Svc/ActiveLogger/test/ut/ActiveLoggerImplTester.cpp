@@ -23,13 +23,23 @@ namespace Svc {
     }
 
     ActiveLoggerImplTester::ActiveLoggerImplTester(Svc::ActiveLoggerImpl& inst) :
-            Svc::ActiveLoggerGTestBase("testerbase",100),
+            Svc::ActiveLoggerGTestBase("testerbase",150),
             m_impl(inst),
             m_receivedPacket(false),
             m_receivedFatalEvent(false) {
     }
 
     ActiveLoggerImplTester::~ActiveLoggerImplTester() {
+    }
+
+    void ActiveLoggerImplTester::from_LogSend_handler(
+        const NATIVE_INT_TYPE portNum,
+        FwEventIdType id,
+        Fw::Time &timeTag,
+        Fw::LogSeverity severity,
+        Fw::LogBuffer &args
+    ) {
+        this->pushFromPortEntry_LogSend(id, timeTag, severity, args);
     }
 
     void ActiveLoggerImplTester::from_PktSend_handler(

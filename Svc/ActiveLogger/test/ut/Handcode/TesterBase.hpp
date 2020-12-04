@@ -54,6 +54,13 @@ namespace Svc {
           Fw::InputLogPort *const LogRecv /*!< The port*/
       );
 
+      //! Connect pingIn to to_pingIn[portNum]
+      //!
+      void connect_to_pingIn(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          Svc::InputPingPort *const pingIn /*!< The port*/
+      );
+
       //! Connect CmdDisp to to_CmdDisp[portNum]
       //!
       void connect_to_CmdDisp(
@@ -68,6 +75,14 @@ namespace Svc {
       // Connect these input ports to the output ports under test
       // ----------------------------------------------------------------------
 
+      //! Get the port that receives input from LogSend
+      //!
+      //! \return from_LogSend[portNum]
+      //!
+      Fw::InputLogPort* get_from_LogSend(
+          const NATIVE_INT_TYPE portNum /*!< The port number*/
+      );
+
       //! Get the port that receives input from PktSend
       //!
       //! \return from_PktSend[portNum]
@@ -81,6 +96,14 @@ namespace Svc {
       //! \return from_FatalAnnounce[portNum]
       //!
       Svc::InputFatalEventPort* get_from_FatalAnnounce(
+          const NATIVE_INT_TYPE portNum /*!< The port number*/
+      );
+
+      //! Get the port that receives input from pingOut
+      //!
+      //! \return from_pingOut[portNum]
+      //!
+      Svc::InputPingPort* get_from_pingOut(
           const NATIVE_INT_TYPE portNum /*!< The port number*/
       );
 
@@ -164,10 +187,10 @@ namespace Svc {
           //!
           History(
               const U32 maxSize /*!< The maximum history size*/
-          ) : 
-              numEntries(0), 
-              maxSize(maxSize) 
-          { 
+          ) :
+              numEntries(0),
+              maxSize(maxSize)
+          {
             this->entries = new T[maxSize];
           }
 
@@ -233,6 +256,26 @@ namespace Svc {
       // Handler prototypes for typed from ports
       // ----------------------------------------------------------------------
 
+      //! Handler prototype for from_LogSend
+      //!
+      virtual void from_LogSend_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          FwEventIdType id, /*!< Log ID*/
+          Fw::Time &timeTag, /*!< Time Tag*/
+          Fw::LogSeverity severity, /*!< The severity argument*/
+          Fw::LogBuffer &args /*!< Buffer containing serialized log entry*/
+      ) = 0;
+
+      //! Handler base function for from_LogSend
+      //!
+      void from_LogSend_handlerBase(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          FwEventIdType id, /*!< Log ID*/
+          Fw::Time &timeTag, /*!< Time Tag*/
+          Fw::LogSeverity severity, /*!< The severity argument*/
+          Fw::LogBuffer &args /*!< Buffer containing serialized log entry*/
+      );
+
       //! Handler prototype for from_PktSend
       //!
       virtual void from_PktSend_handler(
@@ -263,6 +306,20 @@ namespace Svc {
           FwEventIdType Id /*!< The ID of the FATAL event*/
       );
 
+      //! Handler prototype for from_pingOut
+      //!
+      virtual void from_pingOut_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          U32 key /*!< Value to return to pinger*/
+      ) = 0;
+
+      //! Handler base function for from_pingOut
+      //!
+      void from_pingOut_handlerBase(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          U32 key /*!< Value to return to pinger*/
+      );
+
     protected:
 
       // ----------------------------------------------------------------------
@@ -277,6 +334,28 @@ namespace Svc {
       //!
       U32 fromPortHistorySize;
 
+      //! Push an entry on the history for from_LogSend
+      void pushFromPortEntry_LogSend(
+          FwEventIdType id, /*!< Log ID*/
+          Fw::Time &timeTag, /*!< Time Tag*/
+          Fw::LogSeverity severity, /*!< The severity argument*/
+          Fw::LogBuffer &args /*!< Buffer containing serialized log entry*/
+      );
+
+      //! A history entry for from_LogSend
+      //!
+      typedef struct {
+          FwEventIdType id;
+          Fw::Time timeTag;
+          Fw::LogSeverity severity;
+          Fw::LogBuffer args;
+      } FromPortEntry_LogSend;
+
+      //! The history for from_LogSend
+      //!
+      History<FromPortEntry_LogSend>
+        *fromPortHistory_LogSend;
+
       //! Push an entry on the history for from_PktSend
       void pushFromPortEntry_PktSend(
           Fw::ComBuffer &data, /*!< Buffer containing packet data*/
@@ -286,13 +365,13 @@ namespace Svc {
       //! A history entry for from_PktSend
       //!
       typedef struct {
-        Fw::ComBuffer data;
-        U32 context;
+          Fw::ComBuffer data;
+          U32 context;
       } FromPortEntry_PktSend;
 
       //! The history for from_PktSend
       //!
-      History<FromPortEntry_PktSend> 
+      History<FromPortEntry_PktSend>
         *fromPortHistory_PktSend;
 
       //! Push an entry on the history for from_FatalAnnounce
@@ -303,13 +382,29 @@ namespace Svc {
       //! A history entry for from_FatalAnnounce
       //!
       typedef struct {
-        FwEventIdType Id;
+          FwEventIdType Id;
       } FromPortEntry_FatalAnnounce;
 
       //! The history for from_FatalAnnounce
       //!
-      History<FromPortEntry_FatalAnnounce> 
+      History<FromPortEntry_FatalAnnounce>
         *fromPortHistory_FatalAnnounce;
+
+      //! Push an entry on the history for from_pingOut
+      void pushFromPortEntry_pingOut(
+          U32 key /*!< Value to return to pinger*/
+      );
+
+      //! A history entry for from_pingOut
+      //!
+      typedef struct {
+          U32 key;
+      } FromPortEntry_pingOut;
+
+      //! The history for from_pingOut
+      //!
+      History<FromPortEntry_pingOut>
+        *fromPortHistory_pingOut;
 
     protected:
 
@@ -327,6 +422,13 @@ namespace Svc {
           Fw::LogBuffer &args /*!< Buffer containing serialized log entry*/
       );
 
+      //! Invoke the to port connected to pingIn
+      //!
+      void invoke_to_pingIn(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          U32 key /*!< Value to return to pinger*/
+      );
+
     public:
 
       // ----------------------------------------------------------------------
@@ -339,6 +441,12 @@ namespace Svc {
       //!
       NATIVE_INT_TYPE getNum_to_LogRecv(void) const;
 
+      //! Get the number of from_LogSend ports
+      //!
+      //! \return The number of from_LogSend ports
+      //!
+      NATIVE_INT_TYPE getNum_from_LogSend(void) const;
+
       //! Get the number of from_PktSend ports
       //!
       //! \return The number of from_PktSend ports
@@ -350,6 +458,18 @@ namespace Svc {
       //! \return The number of from_FatalAnnounce ports
       //!
       NATIVE_INT_TYPE getNum_from_FatalAnnounce(void) const;
+
+      //! Get the number of to_pingIn ports
+      //!
+      //! \return The number of to_pingIn ports
+      //!
+      NATIVE_INT_TYPE getNum_to_pingIn(void) const;
+
+      //! Get the number of from_pingOut ports
+      //!
+      //! \return The number of from_pingOut ports
+      //!
+      NATIVE_INT_TYPE getNum_from_pingOut(void) const;
 
       //! Get the number of to_CmdDisp ports
       //!
@@ -405,6 +525,14 @@ namespace Svc {
 
       //! Check whether port is connected
       //!
+      //! Whether to_pingIn[portNum] is connected
+      //!
+      bool isConnected_to_pingIn(
+          const NATIVE_INT_TYPE portNum /*!< The port number*/
+      );
+
+      //! Check whether port is connected
+      //!
       //! Whether to_CmdDisp[portNum] is connected
       //!
       bool isConnected_to_CmdDisp(
@@ -416,9 +544,9 @@ namespace Svc {
       // ----------------------------------------------------------------------
 
     protected:
-    
+
       // send command buffers directly - used for intentional command encoding errors
-      void sendRawCmd(FwOpcodeType opcode, U32 cmdSeq, Fw::CmdArgBuffer& args); 
+      void sendRawCmd(FwOpcodeType opcode, U32 cmdSeq, Fw::CmdArgBuffer& args);
 
       //! Send a ALOG_SET_EVENT_REPORT_FILTER command
       //!
@@ -576,7 +704,7 @@ namespace Svc {
 
       //! The history of ALOG_FILE_WRITE_ERR events
       //!
-      History<EventEntry_ALOG_FILE_WRITE_ERR> 
+      History<EventEntry_ALOG_FILE_WRITE_ERR>
         *eventHistory_ALOG_FILE_WRITE_ERR;
 
     protected:
@@ -599,7 +727,7 @@ namespace Svc {
 
       //! The history of ALOG_FILE_WRITE_COMPLETE events
       //!
-      History<EventEntry_ALOG_FILE_WRITE_COMPLETE> 
+      History<EventEntry_ALOG_FILE_WRITE_COMPLETE>
         *eventHistory_ALOG_FILE_WRITE_COMPLETE;
 
     protected:
@@ -626,7 +754,7 @@ namespace Svc {
 
       //! The history of ALOG_SEVERITY_FILTER_STATE events
       //!
-      History<EventEntry_ALOG_SEVERITY_FILTER_STATE> 
+      History<EventEntry_ALOG_SEVERITY_FILTER_STATE>
         *eventHistory_ALOG_SEVERITY_FILTER_STATE;
 
     protected:
@@ -649,7 +777,7 @@ namespace Svc {
 
       //! The history of ALOG_ID_FILTER_ENABLED events
       //!
-      History<EventEntry_ALOG_ID_FILTER_ENABLED> 
+      History<EventEntry_ALOG_ID_FILTER_ENABLED>
         *eventHistory_ALOG_ID_FILTER_ENABLED;
 
     protected:
@@ -672,7 +800,7 @@ namespace Svc {
 
       //! The history of ALOG_ID_FILTER_LIST_FULL events
       //!
-      History<EventEntry_ALOG_ID_FILTER_LIST_FULL> 
+      History<EventEntry_ALOG_ID_FILTER_LIST_FULL>
         *eventHistory_ALOG_ID_FILTER_LIST_FULL;
 
     protected:
@@ -695,7 +823,7 @@ namespace Svc {
 
       //! The history of ALOG_ID_FILTER_REMOVED events
       //!
-      History<EventEntry_ALOG_ID_FILTER_REMOVED> 
+      History<EventEntry_ALOG_ID_FILTER_REMOVED>
         *eventHistory_ALOG_ID_FILTER_REMOVED;
 
     protected:
@@ -718,7 +846,7 @@ namespace Svc {
 
       //! The history of ALOG_ID_FILTER_NOT_FOUND events
       //!
-      History<EventEntry_ALOG_ID_FILTER_NOT_FOUND> 
+      History<EventEntry_ALOG_ID_FILTER_NOT_FOUND>
         *eventHistory_ALOG_ID_FILTER_NOT_FOUND;
 
     protected:
@@ -743,6 +871,10 @@ namespace Svc {
       //!
       Fw::OutputLogPort m_to_LogRecv[1];
 
+      //! To port connected to pingIn
+      //!
+      Svc::OutputPingPort m_to_pingIn[1];
+
       //! To port connected to CmdDisp
       //!
       Fw::OutputCmdPort m_to_CmdDisp[1];
@@ -753,6 +885,10 @@ namespace Svc {
       // From ports
       // ----------------------------------------------------------------------
 
+      //! From port connected to LogSend
+      //!
+      Fw::InputLogPort m_from_LogSend[1];
+
       //! From port connected to PktSend
       //!
       Fw::InputComPort m_from_PktSend[1];
@@ -760,6 +896,10 @@ namespace Svc {
       //! From port connected to FatalAnnounce
       //!
       Svc::InputFatalEventPort m_from_FatalAnnounce[1];
+
+      //! From port connected to pingOut
+      //!
+      Svc::InputPingPort m_from_pingOut[1];
 
       //! From port connected to CmdStatus
       //!
@@ -789,6 +929,17 @@ namespace Svc {
       // Static functions for output ports
       // ----------------------------------------------------------------------
 
+      //! Static function for port from_LogSend
+      //!
+      static void from_LogSend_static(
+          Fw::PassiveComponentBase *const callComp, /*!< The component instance*/
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          FwEventIdType id, /*!< Log ID*/
+          Fw::Time &timeTag, /*!< Time Tag*/
+          Fw::LogSeverity severity, /*!< The severity argument*/
+          Fw::LogBuffer &args /*!< Buffer containing serialized log entry*/
+      );
+
       //! Static function for port from_PktSend
       //!
       static void from_PktSend_static(
@@ -804,6 +955,14 @@ namespace Svc {
           Fw::PassiveComponentBase *const callComp, /*!< The component instance*/
           const NATIVE_INT_TYPE portNum, /*!< The port number*/
           FwEventIdType Id /*!< The ID of the FATAL event*/
+      );
+
+      //! Static function for port from_pingOut
+      //!
+      static void from_pingOut_static(
+          Fw::PassiveComponentBase *const callComp, /*!< The component instance*/
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          U32 key /*!< Value to return to pinger*/
       );
 
       //! Static function for port from_CmdStatus
