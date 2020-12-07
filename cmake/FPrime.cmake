@@ -15,9 +15,13 @@ include("${CMAKE_CURRENT_LIST_DIR}/Options.cmake")
 # being searched for in the cmake system.
 set(FPRIME_BUILD_LOCATIONS "${FPRIME_FRAMEWORK_PATH}" ${FPRIME_LIBRARY_LOCATIONS} "${FPRIME_PROJECT_ROOT}")
 list(REMOVE_DUPLICATES FPRIME_BUILD_LOCATIONS)
+
 message(STATUS "Searching for F prime modules in: ${FPRIME_BUILD_LOCATIONS}")
+# /mnt/c/Users/jonat/Documents/codes/mse/tm/05_FS/fprime;/mnt/c/Users/jonat/Documents/codes/mse/tm/05_FS
 message(STATUS "Autocoder constants file: ${FPRIME_AC_CONSTANTS_FILE}")
+# /mnt/c/Users/jonat/Documents/codes/mse/tm/05_FS/fprime/config/AcConstants.ini
 message(STATUS "Configuration header directory: ${FPRIME_CONFIG_DIR}")
+# /mnt/c/Users/jonat/Documents/codes/mse/tm/05_FS/fprime/config
 
 include("${CMAKE_CURRENT_LIST_DIR}/platform/CMakeLists.txt")
 # Include validation file next, as it checks that everything is in-order
@@ -26,7 +30,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/support/validation/Validation.cmake")
 # hidden items in the CMake system. Typically a user should not interact with any
 # of these files, as they are a library that automates FPrime builds.
 include("${CMAKE_CURRENT_LIST_DIR}/support/Executable.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/support/src/CMakeLists.txt")
+include("${CMAKE_CURRENT_LIST_DIR}/support/src/CMakeLists.txt")     # Create empty.c file
 include("${CMAKE_CURRENT_LIST_DIR}/support/parser/CMakeLists.txt")
 include("${CMAKE_CURRENT_LIST_DIR}/support/Executable.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/support/Module.cmake")
