@@ -14,34 +14,69 @@ Task::Task()
       m_started(false),
       m_suspendedOnPurpose(false) {}
 
+Task::~Task() {
+    if (Task::s_taskRegistry) {
+        Task::s_taskRegistry->removeTask(this);
+        vTaskDelete((TaskHandle_t)this->m_handle);
+    }
+}
+
 Task::TaskStatus Task::start(const Fw::StringBase& name,
                              NATIVE_INT_TYPE identifier,
                              NATIVE_INT_TYPE priority,
                              NATIVE_INT_TYPE stackSize, taskRoutine routine,
                              void* arg, NATIVE_INT_TYPE cpuAffinity) {
+    Task::TaskStatus tStat = TASK_UNKNOWN_ERROR;
+
+    this->m_name = "T_";
+    this->m_name += name;
+    this->m_identifier = identifier;
+
+    TaskHandle_t tid = (TaskHandle_t)this->m_handle;
+
+    BaseType_t stat = xTaskCreate(routine, this->m_name.toChar(), stackSize,
+                                  arg, priority, &tid);
+
+    // If a registry has been registered, register task
+    if (Task::s_taskRegistry) {
+        Task::s_taskRegistry->addTask(this);
+    }
+
+    switch (stat) {
+        case pdPASS:
+            Task::s_numTasks++;
+            tStat = TASK_OK;
+            break;
+        case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
+            // @todo delete the tid handler
+            tStat = TASK_INVALID_PARAMS;
+            break;
+        default:
+            // @todo delete the tid handler
+            tStat = TASK_UNKNOWN_ERROR;
+            break;
+    }
+
+    return tStat;
+}
+
+Task::TaskStatus Task::delay(NATIVE_UINT_TYPE milliseconds) {
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+
+    vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(milliseconds));
+
+    // @todo return TASK_DELAY_ERROR
     return TASK_OK;
 }
 
-Task::~Task() {}
-
-Task::TaskStatus Task::delay(NATIVE_UINT_TYPE milliseconds) {
-    return TASK_OK;  // for coverage analysis
+void Task::suspend(bool onPurpose) {
+    vTaskSuspend((TaskHandle_t)this->m_handle);
 }
 
-void Task::suspend(bool onPurpose) { FW_ASSERT(0); }
-
-void Task::resume(void) { FW_ASSERT(0); }
+void Task::resume(void) { vTaskResume((TaskHandle_t)this->m_handle); }
 
 bool Task::isSuspended(void) {
-    FW_ASSERT(0);
-    return false;
+    return (eTaskGetState((TaskHandle_t)this->m_handle) == eSuspended);
 }
-
-TaskId Task::getOsIdentifier(void) {
-    TaskId T;
-    return T;
-}
-
-Task::TaskStatus Task::join(void** value_ptr) { return TASK_OK; }
 
 }  // namespace Os

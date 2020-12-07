@@ -22,73 +22,127 @@
 
 namespace Os {
 
-// A helper class which stores variables for the queue handle.
-// The queue itself, a pthread condition variable, and pthread
-// mutex are contained within this container class.
-class QueueHandle {
-   public:
-    QueueHandle() {}
+Queue::Queue() : m_handle(-1) {}
 
-    ~QueueHandle() {}
+Queue::QueueStatus Queue::create(const Fw::StringBase &name,
+                                 NATIVE_INT_TYPE depth,
+                                 NATIVE_INT_TYPE msgSize) {
+    QueueHandle_t queueHandle;
 
-    bool create(NATIVE_INT_TYPE depth, NATIVE_INT_TYPE msgSize) {
-        return queue.create(depth, msgSize);
+    this->m_name = "/Q_";
+    this->m_name += name;
+
+#ifdef configUSE_TRACE_FACILITY
+    vTraceSetQueueName(queueHandle, this->m_name.toChar());
+#endif
+
+    queueHandle = xQueueCreate(depth, msgSize + sizeof(msgSize));
+
+    if (NULL != queueHandle) {
+        this->m_handle = (POINTER_CAST)queueHandle;
+        this->depth = depth;
+        this->msgSize = msgSize;
+
+        Queue::s_numQueues++;
+
+        msg_buffer = (U8 *)pvPortMalloc(msgSize + sizeof(msgSize));
+
+        return QUEUE_OK;
     }
-};
 
-Queue::Queue() : m_handle((POINTER_CAST)NULL) {}
+    return QUEUE_UNINITIALIZED;
+}
 
-Queue::QueueStatus Queue::createInternal(const Fw::StringBase& name,
-                                         NATIVE_INT_TYPE depth,
-                                         NATIVE_INT_TYPE msgSize) {
+Queue::~Queue() {
+    if (this->m_handle) {
+        vQueueDelete((QueueHandle_t)this->m_handle);
+    }
+
+    if (msg_buffer) {
+        vPortFree(msg_buffer);
+    }
+}
+
+Queue::QueueStatus Queue::send(const U8 *buffer, NATIVE_INT_TYPE size,
+                               NATIVE_INT_TYPE priority, QueueBlocking block) {
+    QueueHandle_t queueHandle = (QueueHandle_t)this->m_handle;
+
+    if (queueHandle == NULL) {
+        return QUEUE_UNINITIALIZED;
+    }
+
+    if (buffer == NULL) {
+        return QUEUE_EMPTY_BUFFER;
+    }
+
+    msg_buffer[0] = size;
+    memcpy(msg_buffer + sizeof(size), buffer, size);
+
+    if (size != getMsgSize()) {
+        return QUEUE_SIZE_MISMATCH;
+    }
+
+    if (block == QUEUE_NONBLOCKING) {
+        if (xQueueSendToBack(queueHandle, (void *)msg_buffer, (TickType_t)0) ==
+            errQUEUE_FULL) {
+            return QUEUE_FULL;
+        }
+    } else {
+        if (xQueueSendToBack(queueHandle, (void *)msg_buffer,
+                             (TickType_t)portMAX_DELAY) != pdPASS) {
+            return QUEUE_UNKNOWN_ERROR;
+        }
+    }
+
     return QUEUE_OK;
 }
 
-Queue::~Queue() {}
+Queue::QueueStatus Queue::receive(U8 *buffer, NATIVE_INT_TYPE capacity,
+                                  NATIVE_INT_TYPE &actualSize,
+                                  NATIVE_INT_TYPE &priority,
+                                  QueueBlocking block) {
+    QueueHandle_t queueHandle = (QueueHandle_t)this->m_handle;
 
-Queue::QueueStatus sendNonBlock(QueueHandle* queueHandle, const U8* buffer,
-                                NATIVE_INT_TYPE size,
-                                NATIVE_INT_TYPE priority) {
+    if (queueHandle == NULL) {
+        return QUEUE_UNINITIALIZED;
+    }
+
+    if (buffer == NULL) {
+        return QUEUE_EMPTY_BUFFER;
+    }
+
+    if (size != getMsgSize()) {
+        return QUEUE_SIZE_MISMATCH;
+    }
+    
+    if (block == QUEUE_NONBLOCKING) {
+        if (xQueueReceive(queueHandle, (void *)msg_buffer, (TickType_t)0) ==
+            errQUEUE_EMPTY) {
+            return QUEUE_NO_MORE_MSGS;
+        }
+    } else {
+        if (xQueueReceive(queueHandle, (void *)msg_buffer,
+                          (TickType_t)portMAX_DELAY) == errQUEUE_EMPTY) {
+            return QUEUE_NO_MORE_MSGS;
+        }
+    }
+
+    actualSize = msg_buffer[0];
+    memcpy(buffer, msg_buffer + sizeof(actualSize), actualSize);
+
+    return QUEUE_OK;
+}
+
+NATIVE_INT_TYPE Queue::getNumMsgs(void) const {
+    return uxQueueMessagesWaiting((QueueHandle_t)this->m_handle);
+}
+
+NATIVE_INT_TYPE Queue::getMaxMsgs(void) const {
     return 0;
 }
 
-Queue::QueueStatus sendBlock(QueueHandle* queueHandle, const U8* buffer,
-                             NATIVE_INT_TYPE size, NATIVE_INT_TYPE priority) {
-    return Queue::QUEUE_OK;
-}
+NATIVE_INT_TYPE Queue::getQueueSize(void) const { return this->depth; }
 
-Queue::QueueStatus Queue::send(const U8* buffer, NATIVE_INT_TYPE size,
-                               NATIVE_INT_TYPE priority, QueueBlocking block) {
-    return Queue::QUEUE_OK;
-}
-
-Queue::QueueStatus receiveNonBlock(QueueHandle* queueHandle, U8* buffer,
-                                   NATIVE_INT_TYPE capacity,
-                                   NATIVE_INT_TYPE& actualSize,
-                                   NATIVE_INT_TYPE& priority) {
-    return Queue::QUEUE_OK;
-}
-
-Queue::QueueStatus receiveBlock(QueueHandle* queueHandle, U8* buffer,
-                                NATIVE_INT_TYPE capacity,
-                                NATIVE_INT_TYPE& actualSize,
-                                NATIVE_INT_TYPE& priority) {
-    return Queue::QUEUE_OK;
-}
-
-Queue::QueueStatus Queue::receive(U8* buffer, NATIVE_INT_TYPE capacity,
-                                  NATIVE_INT_TYPE& actualSize,
-                                  NATIVE_INT_TYPE& priority,
-                                  QueueBlocking block) {
-    return Queue::QUEUE_OK;
-}
-
-NATIVE_INT_TYPE Queue::getNumMsgs(void) const { return 0; }
-
-NATIVE_INT_TYPE Queue::getMaxMsgs(void) const { return 0; }
-
-NATIVE_INT_TYPE Queue::getQueueSize(void) const { return 0; }
-
-NATIVE_INT_TYPE Queue::getMsgSize(void) const { return 0; }
+NATIVE_INT_TYPE Queue::getMsgSize(void) const { return this->msgSize; }
 
 }  // namespace Os

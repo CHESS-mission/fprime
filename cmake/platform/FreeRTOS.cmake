@@ -1,16 +1,20 @@
-add_definitions(-DTGT_OS_TYPE_RTEMS)
+####
+# FreeRTOS.cmake:
+####
+add_definitions(-DTGT_OS_TYPE_FREERTOS)
 
-include_directories(SYSTEM
-  ${FREERTOS_INCLUDE_DIRS}
-  ${FREERTOS_BSP_INCLUDE_DIRS}
-#  ${FREERTOS_SOURCE_DIR}/testsuites/support/include
+# Find an appropriate thread library
+message(STATUS "Requiring thread library")
+FIND_PACKAGE ( Threads REQUIRED )
+set(FPRIME_USE_POSIX ON)
+
+# FreeRTOS specific flags: C, and C++ settings
+set(CMAKE_C_FLAGS
+  "${CMAKE_C_FLAGS} ${DARWIN_COMMON} -std=c99 -pedantic -Werror-implicit-function-declaration -Wstrict-prototypes"
 )
-
-add_compile_options(${FREERTOS_C_FLAGS})
-
-add_link_options(${FREERTOS_LINK_FLAGS})
-
-#add_compile_definitions(
-#  __rtems__
-#  _POSIX_THREADS
-#)
+set(CMAKE_CXX_FLAGS
+  "${CMAKE_CXX_FLAGS} ${DARWIN_COMMON} -std=c++11"
+)
+# Update for FreeRTOS ?
+# Add linux include path which is compatable with Darwin for StandardTypes.hpp
+# include_directories(SYSTEM "${FPRIME_FRAMEWORK_PATH}/Fw/Types/Linux")
