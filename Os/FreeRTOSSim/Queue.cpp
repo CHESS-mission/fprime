@@ -1,15 +1,7 @@
 // ======================================================================
 // \title  Queue.cpp
-// \author dinkel
-// \brief  Queue implementation using the pthread library. This is NOT
-//         an IPC queue. It is meant to be used between threads within
-//         the same address space.
-//
-// \copyright
-// Copyright 2009-2015, by the California Institute of Technology.
-// ALL RIGHTS RESERVED.  United States Government Sponsorship
-// acknowledged.
-//
+// \author jonathanmichel
+// \brief  Queue implementation using FreeRTOS.
 // ======================================================================
 
 #include <errno.h>
@@ -19,6 +11,8 @@
 #include <Fw/Types/Assert.hpp>
 #include <Os/Pthreads/BufferQueue.hpp>
 #include <Os/Queue.hpp>
+
+#include "FreeRTOS.h"
 
 namespace Os {
 
@@ -114,7 +108,7 @@ Queue::QueueStatus Queue::receive(U8 *buffer, NATIVE_INT_TYPE capacity,
     if (size != getMsgSize()) {
         return QUEUE_SIZE_MISMATCH;
     }
-    
+
     if (block == QUEUE_NONBLOCKING) {
         if (xQueueReceive(queueHandle, (void *)msg_buffer, (TickType_t)0) ==
             errQUEUE_EMPTY) {
@@ -137,9 +131,7 @@ NATIVE_INT_TYPE Queue::getNumMsgs(void) const {
     return uxQueueMessagesWaiting((QueueHandle_t)this->m_handle);
 }
 
-NATIVE_INT_TYPE Queue::getMaxMsgs(void) const {
-    return 0;
-}
+NATIVE_INT_TYPE Queue::getMaxMsgs(void) const { return 0; }
 
 NATIVE_INT_TYPE Queue::getQueueSize(void) const { return this->depth; }
 

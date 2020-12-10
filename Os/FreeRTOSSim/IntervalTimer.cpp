@@ -12,6 +12,8 @@
 #include <Fw/Types/Assert.hpp>
 #include <Os/IntervalTimer.hpp>
 
+#include "FreeRTOS.h"
+
 namespace Os {
 
 IntervalTimer::IntervalTimer() {

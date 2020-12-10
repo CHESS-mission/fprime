@@ -3,6 +3,8 @@
 #include <Fw/Types/Assert.hpp>
 #include <Os/Task.hpp>
 
+#include "FreeRTOS.h"
+
 namespace Os {
 
 TaskRegistry* Task::s_taskRegistry = 0;

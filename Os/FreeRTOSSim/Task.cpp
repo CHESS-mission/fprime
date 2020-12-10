@@ -2,6 +2,8 @@
 #include <Fw/Types/Assert.hpp>
 #include <Os/Task.hpp>
 
+#include "FreeRTOS.h"
+
 //#define DEBUG_PRINT(x,...) Fw::Logger::logMsg(x,##__VA_ARGS__);
 #define DEBUG_PRINT(x, ...)
 

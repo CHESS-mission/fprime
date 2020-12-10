@@ -53,11 +53,15 @@ if (FPRIME_USE_POSIX)
         "${CMAKE_CURRENT_LIST_DIR}/Linux/Directory.cpp"
     )
 endif()
+
 # Darwin IPC queue implementation
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   list(APPEND SOURCE_FILES
     "${CMAKE_CURRENT_LIST_DIR}/MacOs/IPCQueueStub.cpp"
   )
+elseif(${PLATFORM} STREQUAL "FreeRTOSSim")
+  message("FreeRTOSSim QUEUE FreeRTOSSim QUEUE FreeRTOSSim QUEUE")
+  # @todo Why queue implementation is handled here ? Complete ?
 # Linux IPC queues implementation
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "arm-linux-gnueabihf")
   list(APPEND SOURCE_FILES

@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 namespace Os {
-#if defined(TGT_OS_TYPE_VXWORKS)
+#if defined(TGT_OS_TYPE_VXWORKS) || defined(TGT_OS_TYPE_FREERTOS_SIM)
     typedef int TaskIdRepr;
 #elif defined(TGT_OS_TYPE_LINUX) || defined(TGT_OS_TYPE_DARWIN)
     typedef pthread_t TaskIdRepr;

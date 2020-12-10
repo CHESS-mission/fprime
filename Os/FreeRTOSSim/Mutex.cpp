@@ -1,7 +1,7 @@
-#include <HAL/FreeRTOS.h>
-
 #include <Fw/Types/Assert.hpp>
 #include <Os/Mutex.hpp>
+
+#include "FreeRTOS.h"
 
 namespace Os {
 

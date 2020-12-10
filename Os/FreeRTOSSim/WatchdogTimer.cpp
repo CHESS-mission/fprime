@@ -1,5 +1,7 @@
 #include <Os/WatchdogTimer.hpp>
 
+#include "FreeRTOS.h"
+
 namespace Os {
 
 WatchdogTimer::WatchdogTimer()

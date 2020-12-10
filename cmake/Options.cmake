@@ -29,7 +29,7 @@
 #
 # e.g. `-DCMAKE_DEBUG_OUTPUT=ON`
 ####
-option(CMAKE_DEBUG_OUTPUT "Generate F prime's debug output while running CMake" OFF)
+option(CMAKE_DEBUG_OUTPUT "Generate F prime's debug output while running CMake" ON)
 
 
 ####
@@ -92,6 +92,7 @@ endif()
 #
 # e.g. `-DCMAKE_TOOLCHAIN_FILE=/path/to/cmake/toolchain`
 ####
+#set(CMAKE_TOOLCHAIN_FILE /path/to/risc-v/cmake/toolchain) # @todo Configure it for RISC-V toolchain
 
 ####
 # `PLATFORM:`
@@ -101,7 +102,7 @@ endif()
 #
 # e.g. `-DPLATFORM=/path/to/platform/cmake`
 ####
-
+set(PLATFORM FreeRTOSSim)
 
 ####
 # Locations `FPRIME_FRAMEWORK_PATH`, `FPRIME_PROJECT_ROOT`, `FPRIME_LIBRARY_LOCATIONS`
