@@ -12,7 +12,7 @@ set(FPRIME_USE_POSIX OFF)
 set(FREERTOS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../FreeRTOS/FreeRTOS")
 
 include_directories(
-    .
+    ${FPRIME_FRAMEWORK_PATH}/Os/FreeRTOSSim                # FreeRTOSConfig.h
     ${FREERTOS_DIR}/Source/include
     ${FREERTOS_DIR}/Source/portable/ThirdParty/GCC/Posix
     ${FREERTOS_DIR}/Source/portable/ThirdParty/GCC/Posix/utils
