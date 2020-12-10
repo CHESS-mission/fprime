@@ -7,6 +7,7 @@
  * "getRawTime" function differes from the base X86 version of this file.
  */
 #include <errno.h>
+#include <string.h>
 #include <time.h>
 
 #include <Fw/Types/Assert.hpp>
@@ -23,14 +24,12 @@ IntervalTimer::IntervalTimer() {
 
 IntervalTimer::~IntervalTimer() {}
 
-U32 IntervalTimer::getTimerFrequency(void) { return 1; }
-
 void IntervalTimer::getRawTime(RawTime& time) {
     TickType_t xTime1;
 
     /* Get the time the function started. */
 
-    xTime1 = xTaskGetTickCount();
+    xTime1 = 0; // @todo xTaskGetTickCount();
     time.lower = 1000 * pdMS_TO_TICKS(xTime1);
     time.upper = 0;
 }
@@ -60,20 +59,5 @@ U32 IntervalTimer::getDiffUsec(const RawTime& t1In, const RawTime& t2In) {
 void IntervalTimer::start() { getRawTime(this->m_startTime); }
 
 void IntervalTimer::stop() { getRawTime(this->m_stopTime); }
-
-IntervalTimer::RawTime IntervalTimer::getDiffRaw(const RawTime& t1,
-                                                 const RawTime& t2) {
-    RawTime diff;
-    const U64 al = (((U64)t1.upper << 32) + (U64)t1.lower);
-    const U64 bl = (((U64)t2.upper << 32) + (U64)t2.lower);
-    if (t2.lower > t1.lower) {
-        diff.lower = 0xFFFFFFFF - (t2.lower - t1.lower - 1);
-        diff.upper = t1.upper - t2.upper - 1;
-    } else {
-        diff.lower = (U32)(al - bl);
-        diff.upper = (U32)((U64)(al - bl) >> 32);
-    }
-    return diff;
-}
 
 }  // namespace Os

@@ -9,14 +9,14 @@ Mutex::Mutex(void) {
     SemaphoreHandle_t xSemaphore;
 
     xSemaphore = xSemaphoreCreateMutex();
-    if (xSemaphore == NULL) {
+    if (xSemaphore == nullptr) {
         FW_ASSERT(xSemaphore == 0, (U32)xSemaphore);
     }
     this->m_handle = (POINTER_CAST)xSemaphore;
 }
 
 Mutex::~Mutex(void) {
-    if (this->m_handle != NULL) {
+    if (this->m_handle != nullptr) {
         vSemaphoreDelete((SemaphoreHandle_t)this->m_handle);
     }
 }
@@ -37,5 +37,6 @@ void Mutex::unLock(void) {
             FW_ASSERT(false);
         }
     }
+}
 
 }  // namespace Os
