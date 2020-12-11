@@ -14,6 +14,7 @@ set(MOD_DEPS
   Fw/Logger
   Utils/Hash
 )
+
 # Basic source files used in every OSAL layer.  Contains common code and helpers.
 set(SOURCE_FILES
   "${CMAKE_CURRENT_LIST_DIR}/IntervalTimerCommon.cpp"
@@ -34,6 +35,7 @@ if(NOT FPRIME_DISABLE_DEFAULT_LOGGER)
     "${CMAKE_CURRENT_LIST_DIR}/LogDefault.cpp"
   )
 endif()
+
 # Posix systems typically share these
 if(FPRIME_USE_POSIX)
   list(APPEND SOURCE_FILES
@@ -90,7 +92,6 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "
   endif()
 endif()
 
-
 # If baremetal scheduler is set, remove the previouse task files and add in the Baremetal variant
 if (BAREMETAL_SCHEDULER)
     add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Baremetal/TaskRunner/")
@@ -99,10 +100,11 @@ if (BAREMETAL_SCHEDULER)
 endif()
 register_fprime_module()
 
+# After register_fprime_module() 
 if(${PLATFORM} STREQUAL "FreeRTOSSim")
   # Has to be done after register_fprime_module()
   find_library(freertos "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-  target_link_libraries(Os freertos)
+  target_link_libraries(Os freertos)  # Add [ 16%] Built target freertos
 endif()
 
 # Add stubs directory for testing builds

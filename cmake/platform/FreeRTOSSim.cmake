@@ -8,12 +8,25 @@ add_definitions(-DTGT_OS_TYPE_FREERTOS_SIM)
 # but FreeRTOS only
 set(FPRIME_USE_POSIX OFF)
 
+# FreeRTOS repository has to be manually cloned somewhere 
+# https://github.com/FreeRTOS/FreeRTOS.git
+#
+# In my case :
+# ├── 05_FS     <- Chess repository
+# │     ├── App
+# │     ├── fprime
+# │     └── ...
+# └── FreeRTOS  <- Main repository
+#       ├── FreeRTOS-Plus
+#       ├── FreeRTOS
+#       └── ...
+# 
 # Relative FreeRTOS from current CMake source directory (05_FS/App/)
 set(FREERTOS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../FreeRTOS/FreeRTOS")
 
 include_directories(
-    ${FPRIME_FRAMEWORK_PATH}/Os/FreeRTOSSim                # FreeRTOSConfig.h
-    ${FREERTOS_DIR}/Source/include
+    ${FPRIME_FRAMEWORK_PATH}/Os/FreeRTOSSim                 # FreeRTOSConfig.h
+    ${FREERTOS_DIR}/Source/include                          # FreeRTOS.h
     ${FREERTOS_DIR}/Source/portable/ThirdParty/GCC/Posix
     ${FREERTOS_DIR}/Source/portable/ThirdParty/GCC/Posix/utils
     ${FREERTOS_DIR}/Demo/Common/include
@@ -35,12 +48,8 @@ list(APPEND FREERTOS_SOURCES "${FREERTOS_DIR}/Source/portable/ThirdParty/GCC/Pos
 # C flags
 add_definitions(-DprojCOVERAGE_TEST=0)
 add_definitions(-D_WINDOWS_)
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb3 -O0")
-
-# Linker flags
-# set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -ggdb3 -O0")
 
 add_library(freertos STATIC ${FREERTOS_SOURCES})
-#target_link_libraries(App_exe freertos)
+#target_link_libraries(App_exe freertos)    # Link can not be done here, made in OS/CMakeLists.txt
 
 include_directories(SYSTEM "${FPRIME_FRAMEWORK_PATH}/Fw/Types/FreeRTOSSim")
