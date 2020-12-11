@@ -1,22 +1,16 @@
 #include <stdio.h>
 
-void vAssertCalled( unsigned long ulLine, const char * const pcFileName )
-{
+void vAssertCalled(unsigned long ulLine, const char* const pcFileName) {
     printf("ASSERT: %s : %d\n", pcFileName, (int)ulLine);
-    while(1);
+    while (1)
+        ;
 }
 
-unsigned long ulGetRunTimeCounterValue(void)
-{
-    return 0;
-}
+unsigned long ulGetRunTimeCounterValue(void) { return 0; }
 
-void vConfigureTimerForRunTimeStats(void)
-{
-    return;
-}
+void vConfigureTimerForRunTimeStats(void) { return; }
 
-void vApplicationMallocFailedHook(void)
-{
-    while(1);
+void vApplicationMallocFailedHook(void) {
+    while (1)
+        ;
 }
