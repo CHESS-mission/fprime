@@ -3,7 +3,8 @@
 #include "FreeRTOS.h"
 
 namespace Os {
-TaskId::TaskId(void) { id = 0 }   // @todo pxCurrentTCB->uxTCBNumber 
+    
+TaskId::TaskId(void) { id = 0; }   // @todo pxCurrentTCB->uxTCBNumber 
 
 TaskId::~TaskId(void) {}
 

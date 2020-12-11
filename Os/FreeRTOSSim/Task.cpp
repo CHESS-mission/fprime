@@ -3,6 +3,7 @@
 #include <Os/Task.hpp>
 
 #include "FreeRTOS.h"
+#include "task.h"
 
 //#define DEBUG_PRINT(x,...) Fw::Logger::logMsg(x,##__VA_ARGS__);
 #define DEBUG_PRINT(x, ...)
@@ -29,6 +30,8 @@ Task::TaskStatus Task::start(const Fw::StringBase& name,
                              NATIVE_INT_TYPE stackSize, taskRoutine routine,
                              void* arg, NATIVE_INT_TYPE cpuAffinity) {
     Task::TaskStatus tStat = TASK_UNKNOWN_ERROR;
+
+    DEBUG_PRINT("JE SUIS CONTENT");
 
     this->m_name = "T_";
     this->m_name += name;
@@ -79,6 +82,10 @@ void Task::resume(void) { vTaskResume((TaskHandle_t)this->m_handle); }
 
 bool Task::isSuspended(void) {
     return (eTaskGetState((TaskHandle_t)this->m_handle) == eSuspended);
+}
+
+Task::TaskStatus Task::join(void **value_ptr) {
+    return TASK_JOIN_ERROR;
 }
 
 }  // namespace Os

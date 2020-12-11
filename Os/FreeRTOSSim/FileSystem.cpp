@@ -29,6 +29,11 @@ Status copyFile(const char* originPath, const char* destPath) {
     return OTHER_ERROR;
 }
 
+Status appendFile(const char* originPath, const char* destPath,
+                  bool createMissingDest) {
+    return OTHER_ERROR;
+}
+
 Status getFileSize(const char* path, U64& size) { return OTHER_ERROR; }
 
 Status changeWorkingDirectory(const char* path) { return OTHER_ERROR; }

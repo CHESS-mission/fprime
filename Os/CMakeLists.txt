@@ -36,8 +36,22 @@ if(NOT FPRIME_DISABLE_DEFAULT_LOGGER)
   )
 endif()
 
-# Posix systems typically share these
-if(FPRIME_USE_POSIX)
+# FreeRTOS OSAL implementation
+if(${PLATFORM} STREQUAL "FreeRTOSSim")
+  list(APPEND SOURCE_FILES
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/assert.c"
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/File.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/FileSystem.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/InterruptLock.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/IntervalTimer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/Mutex.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/Queue.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/Task.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/TaskId.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/WatchdogTimer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/LogPrintf.cpp"
+  )
+elseif(FPRIME_USE_POSIX)  # Posix systems typically share these
   list(APPEND SOURCE_FILES
     "${CMAKE_CURRENT_LIST_DIR}/LogPrintf.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Pthreads/Queue.cpp"
@@ -53,22 +67,6 @@ if(FPRIME_USE_POSIX)
     "${CMAKE_CURRENT_LIST_DIR}/Linux/FileSystem.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Posix/TaskId.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Linux/Directory.cpp"
-  )
-endif()
-
-# FreeRTOS OSAL implementation
-if(${PLATFORM} STREQUAL "FreeRTOSSim")
-  list(APPEND SOURCE_FILES
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/File.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/FileSystem.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/InterruptLock.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/IntervalTimer.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/Mutex.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/Queue.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/Task.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/TaskCommon.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/TaskId.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/WatchdogTimer.cpp"
   )
 endif()
 

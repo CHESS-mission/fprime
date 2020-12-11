@@ -2,6 +2,7 @@
 #include <Os/Mutex.hpp>
 
 #include "FreeRTOS.h"
+#include "semphr.h"
 
 namespace Os {
 
@@ -10,13 +11,13 @@ Mutex::Mutex(void) {
 
     xSemaphore = xSemaphoreCreateMutex();
     if (xSemaphore == nullptr) {
-        FW_ASSERT(xSemaphore == 0, (U32)xSemaphore);
+        FW_ASSERT(xSemaphore == NULL);
     }
     this->m_handle = (POINTER_CAST)xSemaphore;
 }
 
 Mutex::~Mutex(void) {
-    if (this->m_handle != nullptr) {
+    if (this->m_handle != 0) {
         vSemaphoreDelete((SemaphoreHandle_t)this->m_handle);
     }
 }

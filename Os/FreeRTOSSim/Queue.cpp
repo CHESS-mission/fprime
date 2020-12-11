@@ -5,20 +5,21 @@
 // ======================================================================
 
 #include <errno.h>
-#include <pthread.h>
 #include <stdio.h>
+#include <cstring>
 
 #include <Fw/Types/Assert.hpp>
 #include <Os/Pthreads/BufferQueue.hpp>
 #include <Os/Queue.hpp>
 
 #include "FreeRTOS.h"
+#include "queue.h"
 
 namespace Os {
 
 Queue::Queue() : m_handle(-1) {}
 
-Queue::QueueStatus Queue::create(const Fw::StringBase &name,
+Queue::QueueStatus Queue::createInternal(const Fw::StringBase &name,
                                  NATIVE_INT_TYPE depth,
                                  NATIVE_INT_TYPE msgSize) {
     QueueHandle_t queueHandle;
@@ -27,7 +28,7 @@ Queue::QueueStatus Queue::create(const Fw::StringBase &name,
     this->m_name += name;
 
 #ifdef configUSE_TRACE_FACILITY
-    vTraceSetQueueName(queueHandle, this->m_name.toChar());
+    //vTraceSetQueueName(queueHandle, this->m_name.toChar());
 #endif
 
     queueHandle = xQueueCreate(depth, msgSize + sizeof(msgSize));
@@ -39,7 +40,7 @@ Queue::QueueStatus Queue::create(const Fw::StringBase &name,
 
         Queue::s_numQueues++;
 
-        msg_buffer = (U8 *)pvPortMalloc(msgSize + sizeof(msgSize));
+        this->msg_buffer = (U8 *)pvPortMalloc(msgSize + sizeof(msgSize));
 
         return QUEUE_OK;
     }
@@ -52,8 +53,8 @@ Queue::~Queue() {
         vQueueDelete((QueueHandle_t)this->m_handle);
     }
 
-    if (msg_buffer) {
-        vPortFree(msg_buffer);
+    if (this->msg_buffer) {
+        vPortFree(this->msg_buffer);
     }
 }
 
@@ -69,20 +70,20 @@ Queue::QueueStatus Queue::send(const U8 *buffer, NATIVE_INT_TYPE size,
         return QUEUE_EMPTY_BUFFER;
     }
 
-    msg_buffer[0] = size;
-    memcpy(msg_buffer + sizeof(size), buffer, size);
+    this->msg_buffer[0] = size;
+    memcpy(this->msg_buffer + sizeof(size), buffer, size);
 
     if (size != getMsgSize()) {
         return QUEUE_SIZE_MISMATCH;
     }
 
     if (block == QUEUE_NONBLOCKING) {
-        if (xQueueSendToBack(queueHandle, (void *)msg_buffer, (TickType_t)0) ==
+        if (xQueueSendToBack(queueHandle, (void *)this->msg_buffer, (TickType_t)0) ==
             errQUEUE_FULL) {
             return QUEUE_FULL;
         }
     } else {
-        if (xQueueSendToBack(queueHandle, (void *)msg_buffer,
+        if (xQueueSendToBack(queueHandle, (void *)this->msg_buffer,
                              (TickType_t)portMAX_DELAY) != pdPASS) {
             return QUEUE_UNKNOWN_ERROR;
         }
@@ -105,24 +106,24 @@ Queue::QueueStatus Queue::receive(U8 *buffer, NATIVE_INT_TYPE capacity,
         return QUEUE_EMPTY_BUFFER;
     }
 
-    if (size != getMsgSize()) {
+    if (actualSize != getMsgSize()) {
         return QUEUE_SIZE_MISMATCH;
     }
 
     if (block == QUEUE_NONBLOCKING) {
-        if (xQueueReceive(queueHandle, (void *)msg_buffer, (TickType_t)0) ==
+        if (xQueueReceive(queueHandle, (void *)this->msg_buffer, (TickType_t)0) ==
             errQUEUE_EMPTY) {
             return QUEUE_NO_MORE_MSGS;
         }
     } else {
-        if (xQueueReceive(queueHandle, (void *)msg_buffer,
+        if (xQueueReceive(queueHandle, (void *)this->msg_buffer,
                           (TickType_t)portMAX_DELAY) == errQUEUE_EMPTY) {
             return QUEUE_NO_MORE_MSGS;
         }
     }
 
-    actualSize = msg_buffer[0];
-    memcpy(buffer, msg_buffer + sizeof(actualSize), actualSize);
+    actualSize = this->msg_buffer[0];
+    memcpy(buffer, this->msg_buffer + sizeof(actualSize), actualSize);
 
     return QUEUE_OK;
 }

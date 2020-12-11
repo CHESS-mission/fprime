@@ -3,10 +3,11 @@
 ####
 add_definitions(-DTGT_OS_TYPE_FREERTOS_SIM)
 
-# In our case the Posix/Linux simulator from FreeRTOS will obviously use Posix
-# but current definition concern F' compilation. For F', it shouldn't use Posix
-# but FreeRTOS only
-set(FPRIME_USE_POSIX OFF)
+# In our case the Posix/Linux simulator from FreeRTOS will use Posix
+set(FPRIME_USE_POSIX ON)
+# Requires threading library, use cmake to find appropriate library
+message(STATUS "Requiring thread library")
+FIND_PACKAGE ( Threads REQUIRED )
 
 # FreeRTOS repository has to be manually cloned somewhere 
 # https://github.com/FreeRTOS/FreeRTOS.git
@@ -44,6 +45,7 @@ list(APPEND FREERTOS_SOURCES "${FREERTOS_DIR}/Source/portable/MemMang/heap_3.c")
 # Plaform Port Specific Code
 list(APPEND FREERTOS_SOURCES "${FREERTOS_DIR}/Source/portable/ThirdParty/GCC/Posix/utils/wait_for_event.c")
 list(APPEND FREERTOS_SOURCES "${FREERTOS_DIR}/Source/portable/ThirdParty/GCC/Posix/port.c")
+list(APPEND FREERTOS_SOURCES "${FPRIME_FRAMEWORK_PATH}/OS/FreeRTOSSim/assert.c")
 
 # C flags
 add_definitions(-DprojCOVERAGE_TEST=0)
