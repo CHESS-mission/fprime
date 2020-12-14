@@ -20,7 +20,11 @@ Task::Task()
 Task::~Task() {
     if (Task::s_taskRegistry) {
         Task::s_taskRegistry->removeTask(this);
+    }
+
+    if(this->m_handle) {
         vTaskDelete((TaskHandle_t)this->m_handle);
+        this->m_handle = 0;
     }
 }
 
@@ -53,11 +57,11 @@ Task::TaskStatus Task::start(const Fw::StringBase& name,
             tStat = TASK_OK;
             break;
         case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
-            // @todo delete the tid handler
+            this->m_handle = 0; // not sure if tid has been modified
             tStat = TASK_INVALID_PARAMS;
             break;
         default:
-            // @todo delete the tid handler
+            this->m_handle = 0; // not sure if tid has been modified
             tStat = TASK_UNKNOWN_ERROR;
             break;
     }
@@ -68,13 +72,14 @@ Task::TaskStatus Task::start(const Fw::StringBase& name,
 Task::TaskStatus Task::delay(NATIVE_UINT_TYPE milliseconds) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
 
-    vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(milliseconds));
-
-    // @todo return TASK_DELAY_ERROR
-    return TASK_OK;
+    if(xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(milliseconds)) == pdTRUE) {
+        return TASK_OK;
+    }
+    return TASK_DELAY_ERROR;
 }
 
 void Task::suspend(bool onPurpose) {
+    this->m_suspendedOnPurpose = onPurpose;
     vTaskSuspend((TaskHandle_t)this->m_handle);
 }
 

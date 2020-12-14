@@ -6,6 +6,7 @@ void vAssertCalled(unsigned long ulLine, const char* const pcFileName) {
         ;
 }
 
+/*
 unsigned long ulGetRunTimeCounterValue(void) { return 0; }
 
 void vConfigureTimerForRunTimeStats(void) { return; }
@@ -13,4 +14,4 @@ void vConfigureTimerForRunTimeStats(void) { return; }
 void vApplicationMallocFailedHook(void) {
     while (1)
         ;
-}
+}*/

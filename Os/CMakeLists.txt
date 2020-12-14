@@ -47,7 +47,6 @@ if(${PLATFORM} STREQUAL "FreeRTOSSim")
     "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/Mutex.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/Queue.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/Task.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/TaskId.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/FreeRTOSSim/WatchdogTimer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/LogPrintf.cpp"
   )

@@ -10,9 +10,7 @@ Mutex::Mutex(void) {
     SemaphoreHandle_t xSemaphore;
 
     xSemaphore = xSemaphoreCreateMutex();
-    if (xSemaphore == nullptr) {
-        FW_ASSERT(xSemaphore == NULL);
-    }
+    FW_ASSERT(xSemaphore != NULL);
     this->m_handle = (POINTER_CAST)xSemaphore;
 }
 

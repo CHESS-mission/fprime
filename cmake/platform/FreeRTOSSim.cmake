@@ -39,7 +39,7 @@ FILE(GLOB FREERTOS_SOURCES
     ${FREERTOS_DIR}/Source/*.c
 )
 
-# Memory manager (use malloc() / free())
+# Memory manager (use malloc() / free() wraps for thread safety)
 list(APPEND FREERTOS_SOURCES "${FREERTOS_DIR}/Source/portable/MemMang/heap_3.c")
 
 # Plaform Port Specific Code
