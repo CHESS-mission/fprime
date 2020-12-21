@@ -1,9 +1,12 @@
 #include <Fw/Logger/Logger.hpp>
 #include <Fw/Types/Assert.hpp>
 #include <Os/Task.hpp>
+#include <stdio.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
+
+using namespace std;
 
 //#define DEBUG_PRINT(x,...) Fw::Logger::logMsg(x,##__VA_ARGS__);
 #define DEBUG_PRINT(x, ...)
@@ -35,8 +38,6 @@ Task::TaskStatus Task::start(const Fw::StringBase& name,
                              void* arg, NATIVE_INT_TYPE cpuAffinity) {
     Task::TaskStatus tStat = TASK_UNKNOWN_ERROR;
 
-    DEBUG_PRINT("JE SUIS CONTENT");
-
     this->m_name = "T_";
     this->m_name += name;
     this->m_identifier = identifier;
@@ -54,6 +55,7 @@ Task::TaskStatus Task::start(const Fw::StringBase& name,
     switch (stat) {
         case pdPASS:
             Task::s_numTasks++;
+            printf("[%s] Task sucessfully created\n", this->m_name.toChar());
             tStat = TASK_OK;
             break;
         case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
@@ -90,6 +92,7 @@ bool Task::isSuspended(void) {
 }
 
 Task::TaskStatus Task::join(void **value_ptr) {
+    vTaskDelete(NULL);  // To avoid assert on return from task
     return TASK_JOIN_ERROR;
 }
 
