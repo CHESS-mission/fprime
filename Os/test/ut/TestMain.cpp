@@ -12,8 +12,8 @@ extern "C" {
   void qtest_performance(void);
   void qtest_concurrent(void);
   void intervalTimerTest(void);
-  //void fileSystemTest(void);  // fail on Linux, F' bug
-  //void validateFileTest(void);
+  void fileSystemTest(void);
+  void validateFileTest(void);
 }
 #endif
 
@@ -56,6 +56,19 @@ void run_test(int test_num)
       break;
     case 5:
       qtest_performance();
+      /*******************RESULTS****************************
+      Running OS ut tests
+      -----------------------------
+      ---- performance test -------
+      -----------------------------
+      Testing shallow queue...
+      Time: 1.041s (1.041us per)
+      Testing deep queue...
+      Time: 1.400s (1.400us per)
+      Test complete.
+      -----------------------------
+      -----------------------------
+      *******************************************************/
       break;
     case 6:
       qtest_concurrent();
@@ -64,10 +77,11 @@ void run_test(int test_num)
       intervalTimerTest();
       break;
     case 8: 
-      //fileSystemTest(); Fail on Linux, F' bug
+      fileSystemTest();
       break;
     case 9:
       //validateFileTest();
+      printf("validateFileTest() not implemented on Linux\n");
       break;
     default:
       fprintf(stderr, "Invalid test number: %d\n", test_num);
@@ -134,11 +148,11 @@ void run_test(int test_num)
       break;
     case 8:
       //fileSystemTest(); -- Unimplemented fs in FreeRTOS
-      printf("fileSystemTest() not implemented in FreeRTOS\n");
+      printf("No file system on FreeRTOS\n");
       break;
     case 9:
       //validateFileTest(); -- Unimplemented fs in FreeRTOS
-      printf("validateFileTest() not implemented in FreeRTOS\n");
+      printf("No file system on FreeRTOS\n");
       break;
     default:
       fprintf(stderr, "Invalid test number: %d\n", test_num);

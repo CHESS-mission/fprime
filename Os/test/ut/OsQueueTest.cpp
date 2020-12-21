@@ -22,7 +22,7 @@
 // Set this to 1 if testing a priority queue
 // Set this to 0 if testing a fifo queue
 #if not defined TGT_OS_TYPE_FREERTOS_SIM  
-#define PRIORITY_QUEUE // FreeRTOS queue implementation is  a Fifo (xQueueSendToBack )
+#define PRIORITY_QUEUE // FreeRTOS queue implementation is a Fifo (xQueueSendToBack )
 #endif
 
 enum {
@@ -322,7 +322,7 @@ void qtest_block_receive(void) {
       FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);
     }
 
-#if PRIORITY_QUEUE
+#ifdef PRIORITY_QUEUE
     I32 expectedSendBuffStart[6] = {123, 45, 70, 400, 11, 200};
     NATIVE_INT_TYPE expectedPriorities[6] = {99, 50, 50, 16, 0, 0};
 #else
@@ -391,7 +391,7 @@ void qtest_nonblock_receive(void) {
       FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);
     }
 
-#if PRIORITY_QUEUE
+#ifdef PRIORITY_QUEUE
     I32 expectedSendBuffStart[6] = {123, 45, 70, 400, 11, 200};
     NATIVE_INT_TYPE expectedPriorities[6] = {99, 50, 50, 16, 0, 0};
 #else
@@ -647,7 +647,7 @@ void qtest_concurrent(void) {
     delete testQueue;
     printf("Test complete.\n");
     printf("---------------------\n");
-    printf("-------------------dd--\n");
+    printf("---------------------\n");
 
 #if defined TGT_OS_TYPE_FREERTOS_SIM 
     printf("[FreeRTOS] Stop and relaunch program to check next test\n");

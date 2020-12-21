@@ -126,7 +126,9 @@ if(${PLATFORM} STREQUAL "FreeRTOSSim")
     "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsQueueTest.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test/ut/IntervalTimerTest.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsTaskTest.cpp"
-    # File system being not implemented, there is no corresponding UT 
+    #File system being not implemented on FreeRTOS, there is no corresponding UT 
+    #"${CMAKE_CURRENT_LIST_DIR}/test/ut/OsValidateFileTest.cpp"
+    #"${CMAKE_CURRENT_LIST_DIR}/test/ut/OsFileSystemTest.cpp"
   )
   register_fprime_ut()  
 else()
@@ -135,8 +137,8 @@ else()
     "${CMAKE_CURRENT_LIST_DIR}/test/ut/TestMain.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test/ut/IntervalTimerTest.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsTaskTest.cpp"
-    #"${CMAKE_CURRENT_LIST_DIR}/test/ut/OsValidateFileTest.cpp" -- Remove to avoid fail, F' bug
-    #"${CMAKE_CURRENT_LIST_DIR}/test/ut/OsFileSystemTest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsValidateFileTest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsFileSystemTest.cpp"
   )
   ## TODO: **BROKEN UT**, validation of File fails (F' bug)
   register_fprime_ut()  
