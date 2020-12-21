@@ -85,10 +85,9 @@ Queue::QueueStatus Queue::send(const U8 *buffer, NATIVE_INT_TYPE size,
     memcpy(this->msg_buffer + sizeof(size), buffer, size);
 
     if (block == QUEUE_NONBLOCKING) {
-        if (xQueueSendToBack(queueHandle, (void *)this->msg_buffer, (TickType_t)100) ==
+        if (xQueueSendToBack(queueHandle, (void *)this->msg_buffer, (TickType_t)0) ==
             errQUEUE_FULL) {
             //printf("QUEUE_FULL\n");
-
             return QUEUE_FULL;
         }
     } else {

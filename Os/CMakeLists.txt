@@ -101,7 +101,7 @@ register_fprime_module()
 if(${PLATFORM} STREQUAL "FreeRTOSSim")
   # Has to be done after register_fprime_module()
   find_library(freertos "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-  target_link_libraries(Os freertos)  # Add [ 16%] Built target freertos
+  target_link_libraries(Os freertos) 
 endif()
 
 # Add stubs directory for testing builds
@@ -110,25 +110,47 @@ if (CMAKE_BUILD_TYPE STREQUAL "TESTING")
 endif()
 
 ### UTS ### Note: 3 separate UTs registered here.
-set(UT_SOURCE_FILES
-  "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsQueueTest.cpp"
+if(${PLATFORM} STREQUAL "FreeRTOSSim") 
+  # OSAL tests have to be launched manually for FreeRTOSSim
+  #
+  # fprime/Os ❯ fprime-util build --ut -j 8 // to build OSAL tests 
+  # fprime/Os ❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe [testNb] // to run them
+  #
+  # [testNb] in fprime/Os/test/ut/TestMain.cpp
+  # Current results : 
+  #   Test 6 qtest_concurrent(): Seg fault
+  #   Other tests passed
+
+  set(UT_SOURCE_FILES
   "${CMAKE_CURRENT_LIST_DIR}/test/ut/TestMain.cpp"
-  "${CMAKE_CURRENT_LIST_DIR}/test/ut/IntervalTimerTest.cpp"
-  "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsValidateFileTest.cpp"
-  "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsTaskTest.cpp"
-  "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsFileSystemTest.cpp"
-)
-## TODO: **BROKEN UT**, validation of File fails
-#register_fprime_ut()
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsQueueTest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/IntervalTimerTest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsTaskTest.cpp"
+    # File system being not implemented, there is no corresponding UT 
+  )
+  register_fprime_ut()  
+else()
+  set(UT_SOURCE_FILES
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsQueueTest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/TestMain.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/IntervalTimerTest.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsTaskTest.cpp"
+    #"${CMAKE_CURRENT_LIST_DIR}/test/ut/OsValidateFileTest.cpp" -- Remove to avoid fail, F' bug
+    #"${CMAKE_CURRENT_LIST_DIR}/test/ut/OsFileSystemTest.cpp"
+  )
+  ## TODO: **BROKEN UT**, validation of File fails (F' bug)
+  register_fprime_ut()  
 
-# Second UT Pthreads
-set(UT_SOURCE_FILES
-  "${CMAKE_CURRENT_LIST_DIR}/Pthreads/test/ut/BufferQueueTest.cpp"
-)
-register_fprime_ut("Os_pthreads")
+  # Avoid Pthreads tests when platform is FreeRTOSSim
+  # Second UT Pthreads
+  set(UT_SOURCE_FILES
+    "${CMAKE_CURRENT_LIST_DIR}/Pthreads/test/ut/BufferQueueTest.cpp"
+  )
+  register_fprime_ut("Os_pthreads")
 
-# Third  UT Pthrads MAX Heap
-set(UT_SOURCE_FILES
-  "${CMAKE_CURRENT_LIST_DIR}/Pthreads/MaxHeap/test/ut/MaxHeapTest.cpp"
-)
-register_fprime_ut("Os_pthreads_max_heap")
+  # Third  UT Pthrads MAX Heap
+  set(UT_SOURCE_FILES
+    "${CMAKE_CURRENT_LIST_DIR}/Pthreads/MaxHeap/test/ut/MaxHeapTest.cpp"
+  )
+  register_fprime_ut("Os_pthreads_max_heap")
+endif()

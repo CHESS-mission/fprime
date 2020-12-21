@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <Fw/Types/EightyCharString.hpp>
 
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+#include "FreeRTOS.h"
+#include "task.h"
+#endif
+
 extern "C" {
     void startTestTask(int iters);
 }
@@ -16,6 +21,16 @@ void someTask(void* ptr) {
         Os::Task::delay(1000);
         printf("Tick %ld!\n",iters);
     }
+
+    printf("Passed.\n");
+    printf("Test complete.\n");
+    printf("-----------------------------\n");
+    printf("-----------------------------\n");
+
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+    printf("[FreeRTOS] Stop and relaunch program to check next test\n");
+    vTaskDelete(NULL);  // To avoid assert on return from task
+#endif
 }
 
 void startTestTask(int iters) {
