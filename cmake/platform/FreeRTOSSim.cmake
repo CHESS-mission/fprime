@@ -1,5 +1,15 @@
 ####
 # FreeRTOS.cmake: CMake to compile F' on Posix/Linux Simulator for FreeRTOS
+# 
+# Can be used on Linux (tested on Ubuntu 18.04) or cross compiled for Raspberry
+#
+# In order to cross compile, the [raspberry pi build tools](https://github.com/raspberrypi/tools)
+# should be cloned in `/opt/rpi/`. If they are cloned elsewhere, the user must set the 
+# environment variable `RPI_TOOLCHAIN_DIR` to the full path to the 
+# `arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf` directory before running CMake or
+# `fprime-util generate`.
+#  Use `fprime-util generate [raspberrypi]` for cross compilation
+#
 ####
 add_definitions(-DTGT_OS_TYPE_FREERTOS_SIM)
 

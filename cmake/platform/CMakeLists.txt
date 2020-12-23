@@ -11,7 +11,7 @@ if (NOT DEFINED PLATFORM)
 endif()
 
 # Include platform file based on system name
-message(STATUS "Target build platform: ${PLATFORM}")  # Linux or arm-linux-gnueabihf
+message(STATUS "Target build platform: ${PLATFORM}")
 
 # Output directories
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${PLATFORM}")
@@ -28,9 +28,6 @@ set(EXPECTED_PLATFORM_FILE "${TOOLCHAIN_DIR}/../platform/${PLATFORM_NO_SUFFIX}.c
 # Include host machine settings
 if (EXISTS "${EXPECTED_PLATFORM_FILE}")
   message(STATUS "Including ${EXPECTED_PLATFORM_FILE}") 
-  # /mnt/c/Users/jonat/Documents/codes/mse/tm/05_FS/fprime/cmake/platform/../platform/Linux.cmake
-  # or
-  # /mnt/c/Users/jonat/Documents/codes/mse/tm/05_FS/fprime/cmake/toolchain/../platform/arm-linux-gnueabihf.cmake
   include("${EXPECTED_PLATFORM_FILE}")
 else()
   message(FATAL_ERROR "\n[F-PRIME] No platform config for '${PLATFORM_NO_SUFFIX}'. Please create: '${EXPECTED_PLATFORM_FILE}'\n")
