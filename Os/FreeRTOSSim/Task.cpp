@@ -56,19 +56,17 @@ Task::TaskStatus Task::start(const Fw::StringBase& name,
         case pdPASS:
             Task::s_numTasks++;
             printf("[%s] Task sucessfully created\n", this->m_name.toChar());
-            tStat = TASK_OK;
+            return TASK_OK;
             break;
         case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
             this->m_handle = 0; // not sure if tid has been modified
-            tStat = TASK_INVALID_PARAMS;
+            return TASK_INVALID_PARAMS;
             break;
         default:
             this->m_handle = 0; // not sure if tid has been modified
-            tStat = TASK_UNKNOWN_ERROR;
             break;
     }
-
-    return tStat;
+    return TASK_UNKNOWN_ERROR;
 }
 
 Task::TaskStatus Task::delay(NATIVE_UINT_TYPE milliseconds) {

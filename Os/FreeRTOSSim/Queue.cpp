@@ -42,6 +42,9 @@ Queue::QueueStatus Queue::createInternal(const Fw::StringBase &name,
         Queue::s_numQueues++;
 
         this->msg_buffer = (U8 *)pvPortMalloc(msgSize + sizeof(msgSize));
+        if (this->msg_buffer == NULL) {
+            return QUEUE_UNINITIALIZED;
+        }
 
         return QUEUE_OK;
     }
