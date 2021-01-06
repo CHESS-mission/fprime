@@ -102,7 +102,7 @@ endif()
 #
 # e.g. `-DPLATFORM=/path/to/platform/cmake`
 ####
-set(PLATFORM FreeRTOSSim)
+#set(PLATFORM FreeRTOSSim)
 
 ####
 # Locations `FPRIME_FRAMEWORK_PATH`, `FPRIME_PROJECT_ROOT`, `FPRIME_LIBRARY_LOCATIONS`
