@@ -174,6 +174,12 @@ void testTestFileSystem() {
         char dir_buff[256];
         getcwd(dir_buff, 256);
 	printf("Current dir: %s\n", dir_buff);
+
+    printf("Passed.\n");
+
+    printf("Test complete.\n");
+    printf("-----------------------------\n");
+    printf("-----------------------------\n");
 }
 
 extern "C" {

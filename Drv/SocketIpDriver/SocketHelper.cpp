@@ -29,7 +29,7 @@
     #include <sysLib.h>
     #include <errnoLib.h>
     #include <string.h>
-#elif defined TGT_OS_TYPE_LINUX || TGT_OS_TYPE_DARWIN
+#elif defined TGT_OS_TYPE_LINUX || TGT_OS_TYPE_DARWIN || TGT_OS_TYPE_FREERTOS_SIM
     #include <sys/socket.h>
     #include <netdb.h>
     #include <unistd.h>

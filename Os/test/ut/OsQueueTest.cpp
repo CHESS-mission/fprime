@@ -7,16 +7,23 @@
 #include <signal.h>
 #include <pthread.h>
 
-#if defined TGT_OS_TYPE_LINUX         
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_FREERTOS_SIM    
 #include <time.h>
 #endif
 #if defined TGT_OS_TYPE_DARWIN    
 #include <sys/time.h>
 #endif
+#if defined TGT_OS_TYPE_FREERTOS_SIM  
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "task.h"
+#endif
 
 // Set this to 1 if testing a priority queue
 // Set this to 0 if testing a fifo queue
-#define PRIORITY_QUEUE 1
+#if not defined TGT_OS_TYPE_FREERTOS_SIM  
+#define PRIORITY_QUEUE // FreeRTOS queue implementation is a Fifo (xQueueSendToBack )
+#endif
 
 enum {
         SER_BUFFER_SIZE = 100,
@@ -95,10 +102,11 @@ void fillQueue(Os::Queue* queue) {
     // instead we loop until we get a queue full response:
     MyTestSerializedBuffer sendBuff = getSendBuffer(0);
     Os::Queue::QueueStatus stat;
-    for( NATIVE_INT_TYPE ii = 0; ii < QUEUE_SIZE*100; ii++ ) {
+    while(1) {
         stat = queue->send(sendBuff, 0, Os::Queue::QUEUE_NONBLOCKING);
-        if(stat == Os::Queue::QUEUE_FULL)
+        if(stat == Os::Queue::QUEUE_FULL) {
           break;
+        }
         FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);
     }
 }
@@ -199,6 +207,11 @@ void qtest_nonblock_send(void) {
     printf("Test complete.\n");
     printf("-----------------------------\n");
     printf("-----------------------------\n");
+
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+    printf("[FreeRTOS] Stop and relaunch program to check next test\n");
+    vTaskDelete(NULL);  // To avoid assert on return from task
+#endif
 }
 
 void qtest_block_send(void) {
@@ -245,6 +258,11 @@ void qtest_block_send(void) {
     printf("Test complete.\n");
     printf("-----------------------------\n");
     printf("-----------------------------\n");
+
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+    printf("[FreeRTOS] Stop and relaunch program to check next test\n");
+    vTaskDelete(NULL);  // To avoid assert on return from task
+#endif
 }
 
 // This test verifies queue behavior for active components
@@ -304,18 +322,18 @@ void qtest_block_receive(void) {
       FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);
     }
 
-#if PRIORITY_QUEUE
+#ifdef PRIORITY_QUEUE
     I32 expectedSendBuffStart[6] = {123, 45, 70, 400, 11, 200};
     NATIVE_INT_TYPE expectedPriorities[6] = {99, 50, 50, 16, 0, 0};
 #else
     I32 expectedSendBuffStart[6] = {11, 45, 70, 123, 200, 400};
-    NATIVE_INT_TYPE expectedPriorities[6] = {0, 0, 0, 0, 0, 0};
+    NATIVE_INT_TYPE expectedPriorities[6] = {0, 0, 0, 0, 0, 0};;
 #endif
     for( I32 ii = 0; ii < 6; ii++ ) {
       // Generate a new send buffer for each enqueue:
       MyTestSerializedBuffer expectedSendBuff2 = getSendBuffer(expectedSendBuffStart[ii]);
       stat = testQueue->receive(recvBuff, prio, Os::Queue::QUEUE_BLOCKING);
-      FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);
+      FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);    
       FW_ASSERT(prio == expectedPriorities[ii], prio, expectedPriorities[ii]);
       FW_ASSERT(memcmp(recvBuff.getBuffAddr(), expectedSendBuff2.getBuffAddr(), recvBuff.getBuffLength()) == 0);
     }
@@ -325,6 +343,11 @@ void qtest_block_receive(void) {
     printf("Test complete.\n");
     printf("-----------------------------\n");
     printf("-----------------------------\n");
+
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+    printf("[FreeRTOS] Stop and relaunch program to check next test\n");
+    vTaskDelete(NULL);  // To avoid assert on return from task
+#endif
 }
 
 // This test verifies queue behavior for queued components
@@ -368,7 +391,7 @@ void qtest_nonblock_receive(void) {
       FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);
     }
 
-#if PRIORITY_QUEUE
+#ifdef PRIORITY_QUEUE
     I32 expectedSendBuffStart[6] = {123, 45, 70, 400, 11, 200};
     NATIVE_INT_TYPE expectedPriorities[6] = {99, 50, 50, 16, 0, 0};
 #else
@@ -389,6 +412,11 @@ void qtest_nonblock_receive(void) {
     printf("Test complete.\n");
     printf("-----------------------------\n");
     printf("-----------------------------\n");
+
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+    printf("[FreeRTOS] Stop and relaunch program to check next test\n");
+    vTaskDelete(NULL);  // To avoid assert on return from task
+#endif
 }
 
 // This test shows the performance of the queue:
@@ -404,7 +432,7 @@ void qtest_performance(void) {
     F64 elapsedTime;
     I32 numIterations;
 
-#if defined TGT_OS_TYPE_LINUX         
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_FREERTOS_SIM
     timespec stime;
     timespec etime;
 #endif
@@ -415,7 +443,7 @@ void qtest_performance(void) {
 
     // TEST 1
     printf("Testing shallow queue...\n");
-#if defined TGT_OS_TYPE_LINUX         
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_FREERTOS_SIM       
     (void)clock_gettime(CLOCK_REALTIME,&stime);
 #endif
 #if defined TGT_OS_TYPE_DARWIN    
@@ -436,7 +464,7 @@ void qtest_performance(void) {
       stat = testQueue->receive(recvBuff, prio, Os::Queue::QUEUE_NONBLOCKING);
       FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);
     }
-#if defined TGT_OS_TYPE_LINUX         
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_FREERTOS_SIM
     (void)clock_gettime(CLOCK_REALTIME,&etime);
     elapsedTime = ((F64)(etime.tv_sec - stime.tv_sec)) + ((F64)(etime.tv_nsec - stime.tv_nsec))/1000000000;
     printf("Time: %0.3fs (%0.3fus per)\n", elapsedTime, 1000000*elapsedTime/(F64) numIterations);
@@ -457,7 +485,7 @@ void qtest_performance(void) {
       if(stat == Os::Queue::QUEUE_FULL)
         break;
     }
-#if defined TGT_OS_TYPE_LINUX         
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_FREERTOS_SIM      
     (void)clock_gettime(CLOCK_REALTIME,&stime);
 #endif
 #if defined TGT_OS_TYPE_DARWIN    
@@ -478,7 +506,7 @@ void qtest_performance(void) {
       stat = testQueue->send(sendBuff, ii%4, Os::Queue::QUEUE_NONBLOCKING);
       FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);
     }
-#if defined TGT_OS_TYPE_LINUX         
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_FREERTOS_SIM
     (void)clock_gettime(CLOCK_REALTIME,&etime);
     elapsedTime = ((F64)(etime.tv_sec - stime.tv_sec)) + ((F64)(etime.tv_nsec - stime.tv_nsec))/1000000000;
     printf("Time: %0.3fs (%0.3fus per)\n", elapsedTime, 1000000*elapsedTime/(F64) numIterations);
@@ -498,11 +526,21 @@ void qtest_performance(void) {
     printf("Test complete.\n");
     printf("-----------------------------\n");
     printf("-----------------------------\n");
+
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+    printf("[FreeRTOS] Stop and relaunch program to check next test\n");
+    vTaskDelete(NULL);  // To avoid assert on return from task
+#endif
 }
 
 #define NUM_THREADS 4
 I32 numIterations = 50000;
+// FreeRTOS task function returns void, Linux and Darwin ones void*
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+void run_task(void *ptr)
+#else
 void *run_task(void *ptr)
+#endif
 {
   Os::Queue* testQueue = (Os::Queue*) ptr;
   Os::Queue::QueueStatus stat;
@@ -523,7 +561,13 @@ void *run_task(void *ptr)
     stat = testQueue->send(sendBuff, ii%4, Os::Queue::QUEUE_NONBLOCKING);
     FW_ASSERT(stat == Os::Queue::QUEUE_OK, stat);
   }
-  return NULL;
+
+// To avoid assert on return from FreeRTOS task
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+    vTaskDelete(NULL);  
+#else
+    return NULL;
+#endif
 }
 
 // This test shows the concurrent performance of the queue:
@@ -538,7 +582,7 @@ void qtest_concurrent(void) {
     MyTestSerializedBuffer sendBuff = getSendBuffer(0);
     F64 elapsedTime;
 
-#if defined TGT_OS_TYPE_LINUX         
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_FREERTOS_SIM
     timespec stime;
     timespec etime;
 #endif
@@ -556,14 +600,14 @@ void qtest_concurrent(void) {
       if(stat == Os::Queue::QUEUE_FULL)
         break;
     }
-#if defined TGT_OS_TYPE_LINUX         
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_FREERTOS_SIM
     (void)clock_gettime(CLOCK_REALTIME,&stime);
 #endif
 #if defined TGT_OS_TYPE_DARWIN    
     (void)gettimeofday(&stime,0);
 #endif
 
-#if defined TGT_OS_TYPE_LINUX || TGT_OS_TYPE_DARWIN
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_DARWIN
     pthread_t thread[NUM_THREADS];
 
     for(U32 ii = 0; ii < NUM_THREADS; ++ii) {
@@ -579,7 +623,17 @@ void qtest_concurrent(void) {
     }
 #endif
 
-#if defined TGT_OS_TYPE_LINUX         
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+    TaskHandle_t xHandle[NUM_THREADS];
+
+    for(U32 ii = 0; ii < NUM_THREADS; ++ii) {
+      if(xTaskCreate(run_task, "task", 250, NULL, 1, &xHandle[ii]) != pdPASS) {
+            FW_ASSERT(0);
+        }
+    }
+#endif
+
+#if defined TGT_OS_TYPE_LINUX || defined TGT_OS_TYPE_FREERTOS_SIM
     (void)clock_gettime(CLOCK_REALTIME,&etime);
     elapsedTime = ((F64)(etime.tv_sec - stime.tv_sec)) + ((F64)(etime.tv_nsec - stime.tv_nsec))/1000000000;
     printf("Time: %0.3fs (%0.3fus per)\n", elapsedTime, 1000000*elapsedTime/(F64) numIterations);
@@ -594,4 +648,9 @@ void qtest_concurrent(void) {
     printf("Test complete.\n");
     printf("---------------------\n");
     printf("---------------------\n");
+
+#if defined TGT_OS_TYPE_FREERTOS_SIM 
+    printf("[FreeRTOS] Stop and relaunch program to check next test\n");
+    vTaskDelete(NULL);  // To avoid assert on return from task
+#endif
 }

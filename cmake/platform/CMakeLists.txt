@@ -27,7 +27,7 @@ endif()
 set(EXPECTED_PLATFORM_FILE "${TOOLCHAIN_DIR}/../platform/${PLATFORM_NO_SUFFIX}.cmake")
 # Include host machine settings
 if (EXISTS "${EXPECTED_PLATFORM_FILE}")
-  message(STATUS "Including ${EXPECTED_PLATFORM_FILE}")
+  message(STATUS "Including ${EXPECTED_PLATFORM_FILE}") 
   include("${EXPECTED_PLATFORM_FILE}")
 else()
   message(FATAL_ERROR "\n[F-PRIME] No platform config for '${PLATFORM_NO_SUFFIX}'. Please create: '${EXPECTED_PLATFORM_FILE}'\n")

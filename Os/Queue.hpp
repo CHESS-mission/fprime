@@ -68,6 +68,11 @@ namespace Os {
             QueueStatus createInternal(const Fw::StringBase &name, NATIVE_INT_TYPE depth, NATIVE_INT_TYPE msgSize); //!<  create a message queue
             POINTER_CAST m_handle; //!<  handle for implementation specific queue
             QueueString m_name; //!< queue name
+#if TGT_OS_TYPE_FREERTOS_SIM
+            NATIVE_INT_TYPE depth; //!< queue name
+            NATIVE_INT_TYPE msgSize; //!< message size
+            U8 *msg_buffer; //!< message buffer
+#endif
 #if FW_QUEUE_REGISTRATION
             static QueueRegistry* s_queueRegistry; //!< pointer to registry
 #endif
