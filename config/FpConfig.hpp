@@ -217,7 +217,7 @@
 
 // Specifies the size of the buffer that contains a communications packet.
 #ifndef FW_COM_BUFFER_MAX_SIZE
-#define FW_COM_BUFFER_MAX_SIZE               128   //!< Max size of Fw::Com buffer
+#define FW_COM_BUFFER_MAX_SIZE               1100   //!< Max size of Fw::Com buffer
 #endif
 
 // Specifies the size of the buffer that contains the serialized command arguments.
@@ -248,7 +248,7 @@
 
 // Specifies the maximum size of a string in a log event
 #ifndef FW_LOG_STRING_MAX_SIZE
-#define FW_LOG_STRING_MAX_SIZE           100   //!< Max size of log string parameter type
+#define FW_LOG_STRING_MAX_SIZE           1000   //!< Max size of log string parameter type
 #endif
 
 // Specifies the size of the buffer that contains the serialized telemetry value.
@@ -258,7 +258,7 @@
 
 // Specifies the maximum size of a string in a telemetry channel
 #ifndef FW_TLM_STRING_MAX_SIZE
-#define FW_TLM_STRING_MAX_SIZE           40  //!< Max size of channelized telemetry string type
+#define FW_TLM_STRING_MAX_SIZE           1000  //!< Max size of channelized telemetry string type
 #endif
 
 // Specifies the size of the buffer that contains the serialized parameter value.
