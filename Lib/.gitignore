@@ -3,5 +3,6 @@
 lib
 bin
 examples
+!examples/gs
 Includes
 

@@ -20,7 +20,7 @@ enum SocketIpCfg {
     SOCKET_TIMEOUT_MICROSECONDS = 0,  // Milliseconds component of timeout
     #if defined _PUS
     SOCKET_SEND_UDP = 0,
-    #elif _GDS
+    #elif defined _GDS
     SOCKET_SEND_UDP = 1,    
     #endif          // 0 - Send down using TCP, 1 - Send down using UDP
     SOCKET_SEND_FLAGS = 0,            // send, sendto FLAGS argument

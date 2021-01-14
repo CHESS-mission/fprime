@@ -89,6 +89,7 @@ namespace Svc {
         for (U32 entry = 0; entry < TLMCHAN_HASH_BUCKETS; entry++) {
             TlmEntry* p_entry = &this->m_tlmEntries[1-this->m_activeBuffer].buckets[entry];
             if ((p_entry->updated) && (p_entry->used)) {
+#if defined _GDS 
                 this->m_tlmPacket.setId(p_entry->id);
                 this->m_tlmPacket.setTimeTag(p_entry->lastUpdate);
                 this->m_tlmPacket.setTlmBuffer(p_entry->buffer);
@@ -100,11 +101,13 @@ namespace Svc {
                 if (this->isConnected_PktSend_OutputPort(0)) {
                     this->PktSend_out(0,this->m_comBuffer,0);
                 }
+#elif defined _PUS
+                p_entry->updated = false;
 
                 if (this->isConnected_PktSend_OutputPort(0)) {
                     this->TlmSend_out(0, p_entry->id, p_entry->lastUpdate, p_entry->buffer);
                 }
-                
+#endif   
             }
         }
     }

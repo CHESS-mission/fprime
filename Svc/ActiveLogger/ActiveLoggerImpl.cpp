@@ -187,15 +187,17 @@ namespace Svc {
                 FW_ASSERT(0,static_cast<NATIVE_INT_TYPE>(severity));
                 return;
         }
-        
+
+#if defined _GDS
         if (this->isConnected_PktSend_OutputPort(0)) {
             this->PktSend_out(0, this->m_comBuffer,0);
         }
-
+#elif defined _PUS
         // redirect event through event output
         if (this->isConnected_LogSend_OutputPort(0)) {
             this->LogSend_out(0, id, timeTag, static_cast<Fw::LogSeverity>(severity) , args);
         }
+#endif
     }
 
     void ActiveLoggerImpl::ALOG_SET_EVENT_REPORT_FILTER_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, InputFilterLevel FilterLevel, InputFilterEnabled FilterEnable) {

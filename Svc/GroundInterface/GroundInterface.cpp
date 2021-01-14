@@ -2,6 +2,9 @@
 // \title  GroundInterface.cpp
 // \author lestarch
 // \brief  cpp file for GroundInterface component implementation class
+// 
+// Define _PUS or _GDS depending on GS/protocols needs. 
+// Currently set in App/CmakeLists.txt
 // ====================================================================== 
 
 #include <string.h>
@@ -9,6 +12,7 @@
 #include <Fw/Com/ComPacket.hpp>
 #include <Fw/Log/LogPacket.hpp>
 #include <Svc/GroundInterface/GroundInterface.hpp>
+#include <Svc/GroundInterface/GroundInterfaceCfg.hpp>
 #include "Fw/Types/BasicTypes.hpp"
 
 #include <Os/Log.hpp>
@@ -24,10 +28,12 @@ const U32 GroundInterfaceComponentImpl::END_WORD = static_cast<U32>(0xcafecafe);
 #ifdef __cplusplus
 extern "C" {
 #endif
-U32 charge_estimation = 0x32U;
+U32 PR_NumPings = 0;
 #ifdef __cplusplus
 }
 #endif
+
+
 
 // ------------------------------------- ---------------------------------
 // Construction, initialization, and destruction 
@@ -54,8 +60,6 @@ void GroundInterfaceComponentImpl::init(const NATIVE_INT_TYPE instance) {
         // PUSOpen initialisation error ! Critical error with FSW
         FW_ASSERT(0);
     }
-
-    charge_estimation = 0;
 }
 
 GroundInterfaceComponentImpl::~GroundInterfaceComponentImpl(void) {}
@@ -81,9 +85,9 @@ void GroundInterfaceComponentImpl::fileDownlinkBufferSendIn_handler(
     Fw::Buffer &fwBuffer
 ) {
 #if defined _GDS
-      FW_ASSERT(fwBuffer.getSize() <= MAX_DATA_SIZE);
-      frame_send(fwBuffer.getData(), fwBuffer.getSize(), Fw::ComPacket::FW_PACKET_FILE);
-      fileDownlinkBufferSendOut_out(0, fwBuffer);
+    FW_ASSERT(fwBuffer.getSize() <= MAX_DATA_SIZE);
+    frame_send(fwBuffer.getData(), fwBuffer.getSize(), Fw::ComPacket::FW_PACKET_FILE);
+    fileDownlinkBufferSendOut_out(0, fwBuffer);
 #endif
 }
 
@@ -91,10 +95,15 @@ void GroundInterfaceComponentImpl::readCallback_handler(
     const NATIVE_INT_TYPE portNum,
     Fw::Buffer &buffer
 ) {
+    if(isConnected_readPoll_OutputPort(0)) {
+        // User should chose to use callback or poll method for uplink data
+        FW_ASSERT(0);
+    }
+
 #if defined _PUS
-      processPUS(buffer);
+    processPUS(buffer);
 #elif defined _GDS
-      processBuffer(buffer);
+    processBuffer(buffer);
 #endif
 }
 
@@ -105,63 +114,95 @@ void GroundInterfaceComponentImpl::eventReport_handler(
         Fw::LogSeverity severity,
         Fw::LogBuffer &args
 ) {
-    printf("Event received : %u\n", id);
     // F' variables
-    Fw::Buffer buffer;
+    Fw::Buffer buffer;          //!< buffer to send frame to SocketIpDriver
 
-    Fw::LogPacket m_logPacket; //!< packet buffer for assembling log packets
-    Fw::ComBuffer m_comBuffer; //!< com buffer for sending event buffers
+    //Fw::LogPacket m_logPacket;  //!< Packet buffer for assembling log packets
+    //Fw::ComBuffer m_comBuffer;  //!< Com buffer for sending event buffers
 
+    // PUSOpen variables
+    U8 po_buf[512];
+    U8 po_evtData = 0;
+    U16 po_len;
+    po_result_t po_res = PO_ERR;
+    pus5_evtId_t po_pus5_eventId = PUS5_EVT_HIGH;   // default value
+
+    printf("[PUS] Event received : %u (0x%02X)\n", id, id);
+
+    /**
+    ---- PUS Service 5 severity level ----
+    PUS5_EVT_INFO   = Information event TM[5,1]
+    PUS5_EVT_LOW    = Low severity anomaly TM[5,2]
+    PUS5_EVT_MEDIUM = Medium severity anomaly TM[5,3]
+    PUS5_EVT_HIGH   = High severity anomaly TM[5,4]
+
+    ---- F' Events severity level ----
+    LOG_DIAGNOSTIC  → PUS5_EVT_INFO
+    LOG_ACTIVITY_LO → PUS5_EVT_INFO
+    LOG_COMMAND     → PUS5_EVT_INFO
+    LOG_ACTIVITY_HI → PUS5_EVT_LOW
+    LOG_WARNING_LO  → PUS5_EVT_MEDIUM
+    LOG_ACTIVITY_HI → PUS5_EVT_HIGH
+    LOG_FATAL       → PUS5_EVT_HIGH - internal handling in the future
+    **/
+    switch(severity) {
+        case Fw::LOG_DIAGNOSTIC:
+        case Fw::LOG_ACTIVITY_LO:
+        case Fw::LOG_COMMAND:
+            po_pus5_eventId = PUS5_EVT_INFO;
+            break;
+        case Fw::LOG_ACTIVITY_HI:
+            po_pus5_eventId = PUS5_EVT_LOW;
+            break;
+        case Fw::LOG_WARNING_LO:
+            po_pus5_eventId = PUS5_EVT_MEDIUM;
+            break;
+        case Fw::LOG_WARNING_HI:
+            po_pus5_eventId = PUS5_EVT_HIGH;
+            break;
+        case Fw::LOG_FATAL:
+            po_pus5_eventId = PUS5_EVT_HIGH;
+            break;
+        default:
+            po_pus5_eventId = PUS5_EVT_HIGH;
+    }
+
+    /*/ Event arguments to serialize
     m_logPacket.setId(id);
     m_logPacket.setTimeTag(timeTag);
     m_logPacket.setLogBuffer(args);
     Fw::SerializeStatus stat = m_logPacket.serialize(m_comBuffer);
     FW_ASSERT(Fw::FW_SERIALIZE_OK == stat,static_cast<NATIVE_INT_TYPE>(stat));
+    //*/
+    // Sample - In the future serialize id and LogBuffer
+    po_evtData = id;
 
+    this->m_poStackMutex.lock();
 
-    // PUSOpen variables
-    U8 po_buf[512];
-    U8 po_evtData[] = {4, 3, 6, 9, 8};
-    U16 po_len;
-    po_result_t po_res = PO_ERR;
-
-    /** PUS Service 5 severity level
-    PUS5_EVT_INFO   = Information event TM[5,1]
-    PUS5_EVT_LOW    = Low severity anomaly TM[5,2]
-    PUS5_EVT_MEDIUM = Medium severity anomaly TM[5,3]
-    PUS5_EVT_HIGH   = High severity anomaly TM[5,4]
-    **/
-
-    /** F' Events severity level - Conversion table
-    DIAGNOSTIC  → PUS5_EVT_INFO
-    ACTIVITY_LO → PUS5_EVT_INFO
-    ACTIVITY_HI → PUS5_EVT_INFO
-    WARNING_LO  → PUS5_EVT_LOW
-    WARNING_HI  → PUS5_EVT_MEDIUM
-    FATAL       → PUS5_EVT_HIGH
-    COMMAND     → PUS5_EVT_INFO
-    **/
-
-    // Send TM[5,x] with event ID = x 
-    po_res = po_pus5tm(PUS5_EVT_INFO,   // event ID
-                        po_evtData,     // event data
-                        3U);            // destination APID (GS)
+    // Send TM[5,x] with F' event ID = x 
+    po_res = po_pus5tm( po_pus5_eventId,    // event ID PUS[5, x]
+                        &po_evtData,        // event data
+                        GS_APID);           // destination APID (GS)
 
     if(po_res != PO_SUCCESS) {
-        printf("po error: %u\n", po_res);
+        printf("[PUS] po error: %u\n", po_res);
         FW_ASSERT(0);
     }
 
     // Retrieve created TM[5,x] byte stream from PUSopen stack and send it
     po_res = po_frame(po_buf, &po_len);
+
     if(po_res != PO_SUCCESS) {
-        printf("po error: %u\n", po_res);
+        printf("[PUS] po error: %u\n", po_res);
         FW_ASSERT(0);
     }
 
+    this->m_poStackMutex.unLock();
+
     buffer.setData(po_buf);
     buffer.setSize(po_len);
-    //write_out(0, buffer); // @todo uncomment
+    write_out(0, buffer);
+
 }
 
 void GroundInterfaceComponentImpl::hkReport_handler(
@@ -172,33 +213,41 @@ void GroundInterfaceComponentImpl::hkReport_handler(
 ) {
     // F' variables
     Fw::Buffer buffer;
+    U32 tlmVal;
 
     // PUSOpen variables
     U8 po_buf[512];
     U16 po_len;
     po_result_t po_res = PO_ERR;
 
-    printf("Housekeeping received : %u\n", id);
+    // printf("[PUS] Housekeeping received : %u (0x%02X)\n", id, id);
 
-    // Trigger PUS 3 Service provider to generate TM[3,25]
-    po_triggerPus3();
+    this->m_poStackMutex.lock();
+
+    // Sample - In the future serialize id and TlmBuffer
+    switch(id) {
+        case 0x29:  // (41) PR_NumPings
+            val.deserialize(tlmVal);
+            PR_NumPings = tlmVal;   
+            printf("[PUS] Housekeeping PR_NumPings received : %u \n", tlmVal);
+            // Trigger PUS 3 Service provider to generate TM[3,25]
+            po_triggerPus3();
+            break;
+    }
 
     // Retrieve created TM[3,25] byte stream from PUSopen stack and send it
     po_res = po_frame(po_buf, &po_len);
 
-    if(po_res != PO_SUCCESS) {
-        printf("po error: %u\n", po_res);
-        FW_ASSERT(0);
+    this->m_poStackMutex.unLock();
+
+    // If a report has been generated, send it
+    if(po_len > 0) {
+        buffer.setData(po_buf);
+        buffer.setSize(po_len);
+        printf("[PUS] Send report\n");
+        write_out(0, buffer); 
     }
-
-    buffer.setData(po_buf);
-    buffer.setSize(po_len);
-    //write_out(0, buffer); // @todo uncomment
-
-    // Increment charge_estimation for demonstration
-    charge_estimation++;
 }
-
 
 void GroundInterfaceComponentImpl::schedIn_handler(
     const NATIVE_INT_TYPE portNum, /*!< The port number*/
@@ -209,7 +258,11 @@ void GroundInterfaceComponentImpl::schedIn_handler(
     // Call read poll if it is hooked up
     if (isConnected_readPoll_OutputPort(0)) {
         readPoll_out(0, buffer);
-        processBuffer(buffer);
+#if defined _PUS
+    processPUS(buffer);
+#elif defined _GDS
+    processBuffer(buffer);
+#endif
     }
 }
 
@@ -271,7 +324,7 @@ void GroundInterfaceComponentImpl::routeComData() {
         default:
             return;
     }
-  }
+}
 
 void GroundInterfaceComponentImpl::processRing() {
     // Header items for the packet
@@ -321,27 +374,33 @@ void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer) {
 }
 
 void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
-        printf("Data received : %u\n", buffer.getSize());
     Fw::Buffer extBuff = m_ext_buffer;
-    /* Push received data byte-by-byte into PUSopen(R) stack */
-    U8 service = buffer.getData()[9];
+
+    // Transmission buffer
+    U8 buf[128];
+    U16 len;
+
+    // printf("[PUS] Data received : %u\n", buffer.getSize());
+
+
+    this->m_poStackMutex.lock();
+
+    // Push received data byte-by-byte into PUSopen(R) stack
     for(int i = 0; i < buffer.getSize(); i++) {
-        printf("%d data : %hhu \n",i,buffer.getData()[i]);
+        //printf("[PUS] %d data : %hhu \n",i,buffer.getData()[i]);
         po_accept(buffer.getData()[i]); // todo propre reinterpret_cast
     }
 
-        /* Unwrap TC[17,x] from received CCSDS packet */
+    // Unwrap TC[x,y] from received CCSDS packet
     po_triggerPs();
 
-    /* Forward TC[17,x] to PUS 17 */
+    // Forward TC[x,y] to PUS x
     po_triggerPus1();
 
-        /* Transmission buffer */
-        U8 buf[128];
-        U16 len;
-
-    /* Retrieve created TM[17,x] byte stream from PUSopen(R) stack and send it */
+    // Retrieve potentially created TM[17,x] byte stream from PUSopen(R) stack and send it
     po_frame(buf, &len);
+
+    this->m_poStackMutex.unLock();
 
     if (len > 0) {
         extBuff.setSize(len);
@@ -356,15 +415,15 @@ extern "C" {
 #endif
 
 /**
- * User-defined function triggered by PUS 8 provider.
- * This function is defined in the Mission Database
- * mdb_server.xml under <UserFunctions>.
- */
+* User-defined function triggered by PUS 8 provider.
+* This function is defined in the Mission Database
+* mdb_server.xml under <UserFunctions>.
+*/
 po_result_t UserPus8Fn (uint8_t fid, uint8_t *data, uint16_t len)
 {
-    printf("PUS8 User Function triggered.\n");
-    printf("Function ID = %u.\n", fid);
-    printf("Received data (len = %u): %u %u %u %u\n", len, data[0], data[1], data[2], data[3]);
+    printf("[PUS] PUS8 User Function triggered.\n");
+    printf("[PUS] Function ID = %u.\n", fid);
+    printf("[PUS] Received data (len = %u): %u %u %u %u\n", len, data[0], data[1], data[2], data[3]);
 
     return PO_SUCCESS;
 }

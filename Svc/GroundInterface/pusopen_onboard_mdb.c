@@ -11,7 +11,7 @@
 /* Included PUSopen(R) modules */
 
 #define PUS1_PROVIDER
-/* #define PUS3_PROVIDER */
+#define PUS3_PROVIDER
 #define PUS5_PROVIDER
 #define PUS8_PROVIDER
 /* #define PUS13_PROVIDER */
@@ -25,6 +25,9 @@
 
 /* PUS 1 - Virtual Channel for TM[1,x] */
 #define PUS1_VCID		1
+
+/* PUS 3 - Size of buffer in which TM[3,25] report is composed (in bytes) */
+#define PUS3_REPORT_BUF_SIZE		1
 
 /* PUS 17 - Virtual Channel for TM[17,x] */
 #define PUS17_VCID		0
@@ -78,6 +81,10 @@
 PUS1_PROVIDER_INIT(pus1, PUS1_RECV_BUF_SIZE, PUS1_VCID);
 #endif
 
+#ifdef PUS3_PROVIDER
+PUS3_PROVIDER_INIT(pus3, PUS3_REPORT_BUF_SIZE);
+#endif
+
 #ifdef PUS5_PROVIDER
 PUS5_PROVIDER_INIT(pus5);
 #endif
@@ -105,8 +112,10 @@ FESS_INIT(fess, FESS_ASM, FESS_ASM_LEN, FESS_ENCODING, FESS_ENCRYPTION, FESS_SEN
 
 /* User Code */
 
-extern uint32_t charge_estimation;
-extern po_result_t UserPus8Fn(uint8_t fid, uint8_t *data, uint16_t len);
+
+    extern po_result_t UserPus8Fn(uint8_t fid, uint8_t *data, uint16_t len);
+    extern uint32_t PR_NumPings;
+  
 
 /* On-board Events */
 
@@ -114,8 +123,29 @@ po_evt_t evt[] = {
    {
        .id = 1U,
        .level = PUS5_EVT_INFO,
-       .desc = "Informative event",
-       .dataLen = 4U,
+       .desc = "Information event",
+       .dataLen = 1U,
+       .vcid = 1U
+   },
+   {
+       .id = 2U,
+       .level = PUS5_EVT_LOW,
+       .desc = "Low severity anomaly",
+       .dataLen = 1U,
+       .vcid = 1U
+   },
+   {
+       .id = 3U,
+       .level = PUS5_EVT_MEDIUM,
+       .desc = "Medium severity anomaly",
+       .dataLen = 1U,
+       .vcid = 1U
+   },
+   {
+       .id = 4U,
+       .level = PUS5_EVT_HIGH,
+       .desc = "High severity anomaly",
+       .dataLen = 1U,
        .vcid = 1U
    }
 };
@@ -167,10 +197,10 @@ PO_MDB_PARAMS_PUSUSR
 #endif
    {
        .id = 100U,
-       .name = "EPS_charge_estimation",
-       .desc = "EPS Charge estimation",
+       .name = "PR_NumPings",
+       .desc = "Number of pings received",
        .type = PO_UINT32,
-       .addr = &charge_estimation
+       .addr = &PR_NumPings
    }
 };
 
@@ -198,7 +228,7 @@ po_mdbapid_t po_mdb_apid = {
     .apuid = 2,
 
     .pus1  = POADDR(pus1),
-    .pus3 = PONULL,
+    .pus3  = POADDR(pus3),
     .pus5  = POADDR(pus5),
     .pus8  = POADDR(pus8),
     .pus13 = PONULL,
@@ -208,8 +238,8 @@ po_mdbapid_t po_mdb_apid = {
     .vc = PONULL,
     .fess  = POADDR(fess),
 
-    .numevt = 1U,
-    .numparams = 41U,
+    .numevt = 4U,
+    .numparams = 42U,
     .numreports = 1U,
     .numfct = 1U,
     .events = evt,

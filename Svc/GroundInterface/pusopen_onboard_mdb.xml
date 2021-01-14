@@ -28,7 +28,7 @@ Compile this xml into .c file with poconfig tool :
     </Pus1>
         
     <Pus3>
-      <Used>false</Used>  <!-- use it after -->
+      <Used>true</Used>
     </Pus3>
 
     <Pus5>
@@ -137,13 +137,37 @@ Compile this xml into .c file with poconfig tool :
     <PusEvent>
        <Id>1</Id>
        <Level>PUS5_EVT_INFO</Level>
-       <Description>Informative event</Description>
-       <DataSize>4</DataSize>
+       <Description>Information event</Description>
+       <DataSize>1</DataSize>
+    </PusEvent>
+
+    <PusEvent>
+       <Id>2</Id>
+       <Level>PUS5_EVT_LOW</Level>
+       <Description>Low severity anomaly</Description>
+       <DataSize>1</DataSize>
+    </PusEvent>
+
+    <PusEvent>
+       <Id>3</Id>
+       <Level>PUS5_EVT_MEDIUM</Level>
+       <Description>Medium severity anomaly</Description>
+       <DataSize>1</DataSize>
+    </PusEvent>
+
+    <PusEvent>
+       <Id>4</Id>
+       <Level>PUS5_EVT_HIGH</Level>
+       <Description>High severity anomaly</Description>
+       <DataSize>1</DataSize>
     </PusEvent>
   </Events>
 
   <!-- Declaration of user function called by PUS 8 -->
-  <UserCode>extern po_result_t UserPus8Fn(uint8_t fid, uint8_t *data, uint16_t len);</UserCode>
+  <UserCode>
+    extern po_result_t UserPus8Fn(uint8_t fid, uint8_t *data, uint16_t len);
+    extern uint32_t PR_NumPings;
+  </UserCode>
 
   <!-- PUS 8 user functions -->
   <UserFunctions>
@@ -158,10 +182,10 @@ Compile this xml into .c file with poconfig tool :
   <HkParameters>
     <HkParam>
       <Id>100</Id>
-      <Name>EPS_charge_estimation</Name>
-      <Description>EPS Charge estimation</Description>
+      <Name>PR_NumPings</Name>
+      <Description>Number of pings received</Description>
       <Type>PO_UINT32</Type>
-      <Addr>charge_estimation</Addr>
+      <Addr>PR_NumPings</Addr>
     </HkParam>
   </HkParameters>
  

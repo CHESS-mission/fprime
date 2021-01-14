@@ -7,6 +7,8 @@
 #define GroundInterface_HPP
 
 #include <Fw/Types/Serializable.hpp>
+#include <Os/Mutex.hpp>
+
 #include "Svc/GroundInterface/GroundInterfaceComponentAc.hpp"
 #include "Utils/Types/CircularBuffer.hpp"
 
@@ -117,10 +119,13 @@ namespace Svc {
       // Basic data movement variables
       Fw::Buffer m_ext_buffer;
       U8 m_buffer[GND_BUFFER_SIZE];
+
       // Input variables
       TOKEN_TYPE m_data_size; //!< Data size expected in incoming data
       U8 m_in_buffer[GND_BUFFER_SIZE];
       Types::CircularBuffer m_in_ring;
+
+        Os::Mutex m_poStackMutex; /*!< Protect access to PUSOpen stack */
     };
 
 } // end namespace Svc
