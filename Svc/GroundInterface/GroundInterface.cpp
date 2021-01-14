@@ -38,6 +38,12 @@ namespace Svc {
     ) 
   {
     GroundInterfaceComponentBase::init(instance);
+    #if defined _PUS
+    po_initPus1();  // macro for pus1_reset(PO_DEF_PUS1)
+    po_initPs();    // macro for ps_reset(PO_DEF_PS)
+    po_initFess();  // macro for fess_reset(PO_DEF_FESS)
+    // @todo check return values
+#endif
   }
 
   GroundInterfaceComponentImpl ::
@@ -57,8 +63,11 @@ namespace Svc {
         U32 context
     )
   {
-      FW_ASSERT(data.getBuffLength() <= MAX_DATA_SIZE);
-      frame_send(data.getBuffAddr(), data.getBuffLength());
+#if defined _GDS
+    // Downlink TM disabled
+    FW_ASSERT(data.getBuffLength() <= MAX_DATA_SIZE);
+    frame_send(data.getBuffAddr(), data.getBuffLength());
+#endif
   }
 
   void GroundInterfaceComponentImpl ::
@@ -67,9 +76,11 @@ namespace Svc {
         Fw::Buffer &fwBuffer
     )
   {
+#if defined _GDS
       FW_ASSERT(fwBuffer.getSize() <= MAX_DATA_SIZE);
       frame_send(fwBuffer.getData(), fwBuffer.getSize(), Fw::ComPacket::FW_PACKET_FILE);
       fileDownlinkBufferSendOut_out(0, fwBuffer);
+#endif
   }
 
   void GroundInterfaceComponentImpl ::
@@ -78,7 +89,11 @@ namespace Svc {
         Fw::Buffer &buffer
     )
   {
+#if defined _PUS
+      processPUS(buffer);
+#elif defined _GDS
       processBuffer(buffer);
+#endif
   }
 
   void GroundInterfaceComponentImpl ::
@@ -204,6 +219,38 @@ namespace Svc {
           buffer_offset = buffer_offset + ser_size;
           processRing();
       }
+  }
+
+  void GroundInterfaceComponentImpl ::
+    processPUS(Fw::Buffer& buffer)
+  {
+          printf("Data received : %u\n", buffer.getSize());
+    Fw::Buffer extBuff = m_ext_buffer;
+    /* Push received data byte-by-byte into PUSopen(R) stack */
+    U8 service = buffer.getData()[9];
+    for(int i = 0; i < buffer.getSize(); i++) {
+        printf("%d data : %hhu \n",i,buffer.getData()[i]);
+        po_accept(buffer.getData()[i]); // todo propre reinterpret_cast
+    }
+    
+        /* Unwrap TC[17,x] from received CCSDS packet */
+    po_triggerPs();
+
+    /* Forward TC[17,x] to PUS 17 */
+    po_triggerPus1();
+
+        /* Transmission buffer */
+        U8 buf[128];
+        U16 len;
+
+    /* Retrieve created TM[17,x] byte stream from PUSopen(R) stack and send it */
+    po_frame(buf, &len);
+    
+    if (len > 0) {
+        extBuff.setSize(len);
+        extBuff.setData(buf);
+        write_out(0,extBuff);
+    }
   }
 
 #ifdef __cplusplus

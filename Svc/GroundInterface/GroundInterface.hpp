@@ -92,6 +92,7 @@ namespace Svc {
 
       //! Process a data buffer containing a read from the serial port
       void processBuffer(Fw::Buffer& data /*!< Data to process */);
+      void processPUS(Fw::Buffer& data /*!< Data to process */);
 
       // Basic data movement variables
       Fw::Buffer m_ext_buffer;
