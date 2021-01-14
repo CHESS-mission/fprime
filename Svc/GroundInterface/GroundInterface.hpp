@@ -25,6 +25,7 @@ namespace Svc {
       static const U32 MAX_DATA_SIZE;
       static const TOKEN_TYPE START_WORD;
       static const U32 END_WORD;
+      void processBuffer(Fw::Buffer& data /*!< Data to process */);
       // ----------------------------------------------------------------------
       // Construction, initialization, and destruction
       // ----------------------------------------------------------------------
@@ -113,7 +114,6 @@ namespace Svc {
       void processRing();
 
       //! Process a data buffer containing a read from the serial port
-      void processBuffer(Fw::Buffer& data /*!< Data to process */);
       void processPUS(Fw::Buffer& data /*!< Data to process */);
 
       // Basic data movement variables

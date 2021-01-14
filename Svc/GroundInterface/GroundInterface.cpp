@@ -16,6 +16,7 @@
 #include "Fw/Types/BasicTypes.hpp"
 
 #include <Os/Log.hpp>
+#include <App/Top/Components.hpp>
 
 #include "pusopen.h"
 
@@ -32,7 +33,6 @@ U32 PR_NumPings = 0;
 #ifdef __cplusplus
 }
 #endif
-
 
 
 // ------------------------------------- ---------------------------------
@@ -364,6 +364,7 @@ void GroundInterfaceComponentImpl::processRing() {
 
 void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer) {
     NATIVE_UINT_TYPE buffer_offset = 0;
+
     while (buffer_offset < buffer.getSize()) {
         NATIVE_UINT_TYPE ser_size = (buffer.getSize() >= m_in_ring.get_remaining_size(true)) ?
             m_in_ring.get_remaining_size(true) : static_cast<NATIVE_UINT_TYPE>(buffer.getSize());
@@ -374,6 +375,7 @@ void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer) {
 }
 
 void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
+        printf("Data received : %u\n", buffer.getSize());
     Fw::Buffer extBuff = m_ext_buffer;
 
     // Transmission buffer
@@ -387,7 +389,7 @@ void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
 
     // Push received data byte-by-byte into PUSopen(R) stack
     for(int i = 0; i < buffer.getSize(); i++) {
-        //printf("[PUS] %d data : %hhu \n",i,buffer.getData()[i]);
+        printf("%d data : %hhu \n",i,buffer.getData()[i]);
         po_accept(buffer.getData()[i]); // todo propre reinterpret_cast
     }
 
@@ -421,9 +423,14 @@ extern "C" {
 */
 po_result_t UserPus8Fn (uint8_t fid, uint8_t *data, uint16_t len)
 {
-    printf("[PUS] PUS8 User Function triggered.\n");
-    printf("[PUS] Function ID = %u.\n", fid);
-    printf("[PUS] Received data (len = %u): %u %u %u %u\n", len, data[0], data[1], data[2], data[3]);
+    printf("PUS8 User Function triggered.\n");
+    printf("Function ID = %u.\n", fid);
+     Fw::Buffer extBuff;
+     U8* dataExt = &data[1];
+     extBuff.setSize(len-1);
+     extBuff.setData(dataExt);
+    groundIf.processBuffer(extBuff);
+
 
     return PO_SUCCESS;
 }
