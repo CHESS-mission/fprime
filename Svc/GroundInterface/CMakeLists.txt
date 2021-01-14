@@ -10,7 +10,7 @@
 set(SOURCE_FILES
   "${CMAKE_CURRENT_LIST_DIR}/GroundInterfaceComponentAi.xml"
   "${CMAKE_CURRENT_LIST_DIR}/GroundInterface.cpp"
-  "${CMAKE_CURRENT_LIST_DIR}/pusopen_mdb.c"             # PUSOpen mission database
+  "${CMAKE_CURRENT_LIST_DIR}/pusopen_onboard_mdb.c"             # PUSOpen mission database
 )
 set(MOD_DEPS "Utils/Types")
 register_fprime_module()
@@ -31,7 +31,7 @@ set(UT_SOURCE_FILES
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/Tester.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/TestMain.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/GroundInterfaceRules.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/pusopen_mdb.c"               # PUSOpen mission database
+        "${CMAKE_CURRENT_LIST_DIR}/pusopen_onboard_mdb.c"       # PUSOpen mission database
         )
 # Test Includes for this UT
 register_fprime_ut()
