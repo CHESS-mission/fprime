@@ -2,7 +2,8 @@
 
 lib
 bin
-examples
-!examples/gs
+examples/*
+!examples/gs/
+
 Includes
 
