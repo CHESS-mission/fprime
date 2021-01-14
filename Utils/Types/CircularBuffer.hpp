@@ -18,7 +18,7 @@
 #ifndef TYPES_CIRCULAR_BUFFER_HPP
 #define TYPES_CIRCULAR_BUFFER_HPP
 
-//#define CIRCULAR_DEBUG
+// #define CIRCULAR_DEBUG
 
 // An assertion to guarantee the self-consistency of a head/tail pointer w.r.t. the store and size
 #define ASSERT_CONSISTENT(store, size, X) \
@@ -51,7 +51,7 @@ class CircularBuffer {
 
         /**
          * Deserialize data into the given variable without moving the head pointer
-         * \param U8& value: value to fill
+         * \param char& value: value to fill
          */
         Fw::SerializeStatus peek(char& value, NATIVE_UINT_TYPE offset = 0);
         /**

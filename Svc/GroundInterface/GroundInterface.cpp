@@ -98,7 +98,6 @@ void GroundInterfaceComponentImpl::readCallback_handler(
 #endif
 }
 
-
 void GroundInterfaceComponentImpl::eventReport_handler(
         const NATIVE_INT_TYPE portNum,
         FwEventIdType id,
@@ -166,10 +165,10 @@ void GroundInterfaceComponentImpl::eventReport_handler(
 }
 
 void GroundInterfaceComponentImpl::hkReport_handler(
-    const NATIVE_INT_TYPE portNum,
-    FwChanIdType id,
-    Fw::Time &timeTag,
-    Fw::TlmBuffer &val
+        const NATIVE_INT_TYPE portNum,
+        FwChanIdType id,
+        Fw::Time &timeTag,
+        Fw::TlmBuffer &val
 ) {
     // F' variables
     Fw::Buffer buffer;
@@ -199,6 +198,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
     // Increment charge_estimation for demonstration
     charge_estimation++;
 }
+
 
 void GroundInterfaceComponentImpl::schedIn_handler(
     const NATIVE_INT_TYPE portNum, /*!< The port number*/
@@ -309,20 +309,19 @@ void GroundInterfaceComponentImpl::processRing() {
     //*/
 }
 
-void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer)
-  {
-      NATIVE_UINT_TYPE buffer_offset = 0;
-      while (buffer_offset < buffer.getSize()) {
-          NATIVE_UINT_TYPE ser_size = (buffer.getSize() >= m_in_ring.get_remaining_size(true)) ?
-              m_in_ring.get_remaining_size(true) : static_cast<NATIVE_UINT_TYPE>(buffer.getSize());
-          m_in_ring.serialize(buffer.getData() + buffer_offset, ser_size);
-          buffer_offset = buffer_offset + ser_size;
-          processRing();
-      }
-  }
+void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer) {
+    NATIVE_UINT_TYPE buffer_offset = 0;
+    while (buffer_offset < buffer.getSize()) {
+        NATIVE_UINT_TYPE ser_size = (buffer.getSize() >= m_in_ring.get_remaining_size(true)) ?
+            m_in_ring.get_remaining_size(true) : static_cast<NATIVE_UINT_TYPE>(buffer.getSize());
+        m_in_ring.serialize(buffer.getData() + buffer_offset, ser_size);
+        buffer_offset = buffer_offset + ser_size;
+        processRing();
+    }
+}
 
-  void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
-          printf("Data received : %u\n", buffer.getSize());
+void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
+        printf("Data received : %u\n", buffer.getSize());
     Fw::Buffer extBuff = m_ext_buffer;
     /* Push received data byte-by-byte into PUSopen(R) stack */
     U8 service = buffer.getData()[9];
@@ -330,7 +329,7 @@ void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer)
         printf("%d data : %hhu \n",i,buffer.getData()[i]);
         po_accept(buffer.getData()[i]); // todo propre reinterpret_cast
     }
-    
+
         /* Unwrap TC[17,x] from received CCSDS packet */
     po_triggerPs();
 
@@ -343,13 +342,14 @@ void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer)
 
     /* Retrieve created TM[17,x] byte stream from PUSopen(R) stack and send it */
     po_frame(buf, &len);
-    
+
     if (len > 0) {
         extBuff.setSize(len);
         extBuff.setData(buf);
         write_out(0,extBuff);
     }
-  }
+}
+
 
 #ifdef __cplusplus
 extern "C" {
