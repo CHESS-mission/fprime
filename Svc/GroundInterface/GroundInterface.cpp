@@ -9,6 +9,8 @@
 #include "Fw/Types/BasicTypes.hpp"
 #include <string.h>
 
+#include "pusopen.h"
+
 namespace Svc {
 
   const U32 GroundInterfaceComponentImpl::MAX_DATA_SIZE = 2048;
@@ -203,4 +205,54 @@ namespace Svc {
           processRing();
       }
   }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * User-defined function triggered by PUS 8 provider.
+ * This function is defined in the Mission Database
+ * mdb_server.xml under <UserFunctions>.
+ */
+po_result_t UserPus8Fn (uint8_t fid, uint8_t *data, uint16_t len)
+{
+    printf("PUS8 User Function triggered.\n");
+    printf("Function ID = %u.\n", fid);
+    printf("Received data (len = %u): %u %u %u %u\n", len, data[0], data[1], data[2], data[3]);
+
+    return PO_SUCCESS;
+}
+
+/* -- Global functions -- */
+po_result_t subnet_request(
+        uint8_t * const data,
+        const uint16_t len,
+        const po_apid_t apid,
+        const uint16_t vcid) {
+    po_result_t res = PO_SUCCESS;     /* Result of this function */
+
+    (void)apid;
+    (void)vcid;
+
+    /* Forward requested data directly down to FESS */
+    res = fessChannelAccess_request(PO_DEF_FESS, data, len);
+
+    return res;
+}
+
+po_result_t subnet_indication(uint8_t * const data, uint16_t *len) {
+    po_result_t res = PO_SUCCESS;  /* Result of this function */
+    uint8_t quality = 0U;
+    uint8_t sequence = 0U;
+
+    /* Call FESS indication API to retrieve received data */
+    res = fessChannelAccess_indication(PO_DEF_FESS, data, len, &quality, &sequence);
+
+    return res;
+}
+
+#ifdef __cplusplus
+}
+#endif
 } // end namespace Svc
