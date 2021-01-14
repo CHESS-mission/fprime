@@ -9,11 +9,24 @@
     <import_port_type>Fw/Time/TimePortAi.xml</import_port_type>
     <import_port_type>Fw/Buffer/BufferGetPortAi.xml</import_port_type>
     <import_port_type>Svc/Sched/SchedPortAi.xml</import_port_type>
+    <import_port_type>Fw/Tlm/TlmPortAi.xml</import_port_type>
     <import_dictionary>Svc/GroundInterface/Events.xml</import_dictionary>
     <ports>
 
         <!-- Input ports -->
-        <port name="downlinkPort" data_type="Fw::Com"  kind="guarded_input"    max_number="1">
+        <port name="downlinkPort" data_type="Fw::Com"  kind="guarded_input" max_number="1">
+        </port>
+
+        <port name="eventReport" data_type="Fw::Log" kind="guarded_input" max_number="1">
+            <comment>
+            Event input port
+            </comment>
+        </port>
+
+        <port name="hkReport" data_type="Fw::Tlm" kind="guarded_input" max_number="1">
+            <comment>
+            Housekeeping input port
+            </comment>
         </port>
 
         <port name="fileDownlinkBufferSendIn" data_type="Fw::BufferSend"  kind="guarded_input"    max_number="1">

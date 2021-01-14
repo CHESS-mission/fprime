@@ -70,7 +70,6 @@ namespace Svc {
             Fw::TlmPacket m_tlmPacket;
 
     };
-
 }
 
 #endif /* TELEMCHANIMPL_HPP_ */

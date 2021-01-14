@@ -18,6 +18,11 @@
             Telemetry input port
             </comment>
         </port>
+        <port name="TlmSend" data_type="Fw::Tlm" kind="output" >
+            <comment>
+            Telemetry output port
+            </comment>
+        </port>
         <port name="Run" data_type="Svc::Sched" kind="async_input" >
             <comment>
             Run port for starting packet send cycle

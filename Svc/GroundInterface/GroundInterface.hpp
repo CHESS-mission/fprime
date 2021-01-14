@@ -3,11 +3,12 @@
 // \author lestarch
 // \brief  hpp file for GroundInterface component implementation class
 // ====================================================================== 
+#ifndef GroundInterface_HPP
+#define GroundInterface_HPP
+
 #include <Fw/Types/Serializable.hpp>
 #include "Svc/GroundInterface/GroundInterfaceComponentAc.hpp"
 #include "Utils/Types/CircularBuffer.hpp"
-#ifndef GroundInterface_HPP
-#define GroundInterface_HPP
 
 #define GND_BUFFER_SIZE 1024
 #define TOKEN_TYPE U32
@@ -54,6 +55,25 @@ namespace Svc {
           const NATIVE_INT_TYPE portNum, /*!< The port number*/
           Fw::ComBuffer &data, /*!< Buffer containing packet data*/
           U32 context /*!< Call context value; meaning chosen by user*/
+      );
+
+      //! Handler implementation for eventReport
+      //!
+      void eventReport_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          FwEventIdType id, /*!< Log ID*/
+          Fw::Time &timeTag, /*!< Time Tag*/
+          Fw::LogSeverity severity, /*!< The severity argument*/
+          Fw::LogBuffer &args /*!< Buffer containing serialized log entry*/
+      );
+
+      //! Handler implementation for hkReport
+      //!
+      void hkReport_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          FwChanIdType id, /*!< Telemetry Channel ID*/
+          Fw::Time &timeTag, /*!< Time Tag*/
+          Fw::TlmBuffer &val /*!< Buffer containing serialized telemetry value*/
       );
 
       //! Handler implementation for fileDownlinkBufferSendIn

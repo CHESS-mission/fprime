@@ -10,11 +10,12 @@
  * <br /><br />
  */
 #include <Svc/TlmChan/TlmChanImpl.hpp>
-#include <cstring>
 #include <Fw/Types/BasicTypes.hpp>
 #include <Fw/Types/Assert.hpp>
 #include <Fw/Com/ComBuffer.hpp>
+#include <Fw/Tlm/TlmPacket.hpp>
 
+#include <cstring>
 #include <stdio.h>
 
 namespace Svc {
@@ -44,12 +45,9 @@ namespace Svc {
         // clear free index
         this->m_tlmEntries[0].free = 0;
         this->m_tlmEntries[1].free = 0;
-
-
     }
 
-    TlmChanImpl::~TlmChanImpl() {
-    }
+    TlmChanImpl::~TlmChanImpl() {}
 
     void TlmChanImpl::init(
             NATIVE_INT_TYPE queueDepth, /*!< The queue depth*/
@@ -65,11 +63,122 @@ namespace Svc {
     void TlmChanImpl::pingIn_handler(
           const NATIVE_INT_TYPE portNum,
           U32 key
-      )
-    {
+    ) {
         // return key
         this->pingOut_out(0,key);
     }
 
+    void TlmChanImpl::Run_handler(NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context) {
+        // Only write packets if connected
+        if (not this->isConnected_PktSend_OutputPort(0)) {
+            return;
+        }
 
+        // lock mutex long enough to modify active telemetry buffer
+        // so the data can be read without worrying about updates
+        this->lock();
+        this->m_activeBuffer = 1 - this->m_activeBuffer;
+        // set activeBuffer to not updated
+        for (U32 entry = 0; entry < TLMCHAN_HASH_BUCKETS; entry++) {
+            this->m_tlmEntries[this->m_activeBuffer].buckets[entry].updated = false;
+        }
+        this->unLock();
+
+        // go through each entry and send a packet if it has been updated
+
+        for (U32 entry = 0; entry < TLMCHAN_HASH_BUCKETS; entry++) {
+            TlmEntry* p_entry = &this->m_tlmEntries[1-this->m_activeBuffer].buckets[entry];
+            if ((p_entry->updated) && (p_entry->used)) {
+                this->m_tlmPacket.setId(p_entry->id);
+                this->m_tlmPacket.setTimeTag(p_entry->lastUpdate);
+                this->m_tlmPacket.setTlmBuffer(p_entry->buffer);
+                this->m_comBuffer.resetSer();
+                Fw::SerializeStatus stat = this->m_tlmPacket.serialize(this->m_comBuffer);
+                FW_ASSERT(Fw::FW_SERIALIZE_OK == stat,static_cast<NATIVE_INT_TYPE>(stat));
+                p_entry->updated = false;
+
+                if (this->isConnected_PktSend_OutputPort(0)) {
+                    this->PktSend_out(0,this->m_comBuffer,0);
+                }
+
+                if (this->isConnected_PktSend_OutputPort(0)) {
+                    this->TlmSend_out(0, p_entry->id, p_entry->lastUpdate, p_entry->buffer);
+                }
+                
+            }
+        }
+    }
+    void TlmChanImpl::TlmRecv_handler(NATIVE_INT_TYPE portNum, FwChanIdType id, Fw::Time &timeTag, Fw::TlmBuffer &val) {
+        // Compute index for entry
+        NATIVE_UINT_TYPE index = this->doHash(id);
+        TlmEntry* entryToUse = 0;
+        TlmEntry* prevEntry = 0;
+
+        // Search to see if channel has already been stored or a bucket needs to be added
+        if (this->m_tlmEntries[this->m_activeBuffer].slots[index]) {
+            entryToUse = this->m_tlmEntries[this->m_activeBuffer].slots[index];
+            for (NATIVE_UINT_TYPE bucket = 0; bucket < TLMCHAN_HASH_BUCKETS; bucket++) {
+                if (entryToUse) {
+                    if (entryToUse->id == id) { // found the matching entry
+                        break;
+                    } else { // try next entry
+                        prevEntry = entryToUse;
+                        entryToUse = entryToUse->next;
+                    }
+                } else {
+                    // Make sure that we haven't run out of buckets
+                    FW_ASSERT(this->m_tlmEntries[this->m_activeBuffer].free < TLMCHAN_HASH_BUCKETS);
+                    // add new bucket from free list
+                    entryToUse = &this->m_tlmEntries[this->m_activeBuffer].buckets[this->m_tlmEntries[this->m_activeBuffer].free++];
+                    prevEntry->next = entryToUse;
+                    // clear next pointer
+                    entryToUse->next = 0;
+                    break;
+                }
+            }
+        } else {
+            // Make sure that we haven't run out of buckets
+            FW_ASSERT(this->m_tlmEntries[this->m_activeBuffer].free < TLMCHAN_HASH_BUCKETS);
+            // create new entry at slot head
+            this->m_tlmEntries[this->m_activeBuffer].slots[index] = &this->m_tlmEntries[this->m_activeBuffer].buckets[this->m_tlmEntries[this->m_activeBuffer].free++];
+            entryToUse = this->m_tlmEntries[this->m_activeBuffer].slots[index];
+            entryToUse->next = 0;
+        }
+
+        // copy into entry
+        FW_ASSERT(entryToUse);
+        entryToUse->used = true;
+        entryToUse->id = id;
+        entryToUse->updated = true;
+        entryToUse->lastUpdate = timeTag;
+        entryToUse->buffer = val;
+
+    }
+
+    void TlmChanImpl::TlmGet_handler(NATIVE_INT_TYPE portNum, FwChanIdType id, Fw::Time &timeTag, Fw::TlmBuffer &val) {
+        // Compute index for entry
+        NATIVE_UINT_TYPE index = this->doHash(id);
+
+        // Search to see if channel has been stored
+        TlmEntry *entryToUse = this->m_tlmEntries[this->m_activeBuffer].slots[index];
+        for (NATIVE_UINT_TYPE bucket = 0; bucket < TLMCHAN_HASH_BUCKETS; bucket++) {
+            if (entryToUse) { // If bucket exists, check id
+                if (entryToUse->id == id) {
+                    break;
+                } else { // otherwise go to next bucket
+                    entryToUse = entryToUse->next;
+                }
+            } else { // no buckets left to search
+                break;
+            }
+        }
+
+        if (entryToUse) {
+            val  = entryToUse->buffer;
+            timeTag = entryToUse->lastUpdate;
+        } else { // requested entry may not be written yet; empty buffer
+            val.resetSer();
+        }
+
+    }
 }
