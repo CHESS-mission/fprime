@@ -24,7 +24,7 @@
 // Includes for the IP layer
 #ifdef TGT_OS_TYPE_VXWORKS
     #include <inetLib.h>
-#elif defined TGT_OS_TYPE_LINUX || TGT_OS_TYPE_DARWIN || TGT_OS_TYPE_FREERTOS_SIM
+#elif defined TGT_OS_TYPE_LINUX || TGT_OS_TYPE_DARWIN
     #include <arpa/inet.h>
 #else
     #error OS not supported for IP Socket Communications
