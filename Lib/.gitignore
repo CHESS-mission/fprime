@@ -1,9 +1,0 @@
-## PUSOpen lib 
-
-lib
-bin
-examples/*
-!examples/gs/
-
-Includes
-

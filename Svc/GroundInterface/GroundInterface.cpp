@@ -375,7 +375,6 @@ void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer) {
 }
 
 void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
-        printf("Data received : %u\n", buffer.getSize());
     Fw::Buffer extBuff = m_ext_buffer;
 
     // Transmission buffer
@@ -383,7 +382,6 @@ void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
     U16 len;
 
     // printf("[PUS] Data received : %u\n", buffer.getSize());
-
 
     this->m_poStackMutex.lock();
 
