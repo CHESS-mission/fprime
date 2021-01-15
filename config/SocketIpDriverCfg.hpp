@@ -20,14 +20,15 @@ enum SocketIpCfg {
     SOCKET_TIMEOUT_MICROSECONDS = 0,  // Milliseconds component of timeout
     #if defined _PUS
     SOCKET_SEND_UDP = 0,
+    MAX_RECV_BUFFER_SIZE = 1,      // Maximum and allocation size of the send buffer. TODO: use buffer manager
     #elif defined _GDS
-    SOCKET_SEND_UDP = 1,    
+    SOCKET_SEND_UDP = 1,  
+    MAX_RECV_BUFFER_SIZE = 2048,      // Maximum and allocation size of the send buffer. TODO: use buffer manager 
     #endif          // 0 - Send down using TCP, 1 - Send down using UDP
     SOCKET_SEND_FLAGS = 0,            // send, sendto FLAGS argument
     SOCKET_RECV_FLAGS = 0,            // recv FLAGS argument
     RECONNECT_AUTOMATICALLY = 1,      // Attempt to reconnect when a socket closes
-    MAX_SEND_ITERATIONS = 0xFFFF,     // Maximum send iterations
-    MAX_RECV_BUFFER_SIZE = 2048,      // Maximum and allocation size of the send buffer. TODO: use buffer manager
+    MAX_SEND_ITERATIONS = 0xFFFF,     // Maximum send iterations 
     PRE_CONNECTION_RETRY_INTERVAL_MS = 1000, // Interval between connection retries before main recv thread starts
     MAX_HOSTNAME_SIZE = 256 // Maximum stored hostname
 };

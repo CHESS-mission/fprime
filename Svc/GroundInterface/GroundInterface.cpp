@@ -14,11 +14,12 @@
 #include <Svc/GroundInterface/GroundInterface.hpp>
 #include <Svc/GroundInterface/GroundInterfaceCfg.hpp>
 #include "Fw/Types/BasicTypes.hpp"
-
 #include <Os/Log.hpp>
-#include <App/Top/Components.hpp>
+
 
 #include "pusopen.h"
+
+extern Svc::GroundInterfaceComponentImpl groundIf;
 
 namespace Svc {
 
@@ -375,19 +376,20 @@ void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer) {
 }
 
 void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
-    Fw::Buffer extBuff = m_ext_buffer;
-
+ Fw::Buffer extBuff = m_ext_buffer;
+    //printf("[PUS] service pus received \n");
+    //printf("[PUS] size data %u\n",buffer.getSize());
     // Transmission buffer
-    U8 buf[128];
+    U8 buf[512];
     U16 len;
 
     // printf("[PUS] Data received : %u\n", buffer.getSize());
+
 
     this->m_poStackMutex.lock();
 
     // Push received data byte-by-byte into PUSopen(R) stack
     for(int i = 0; i < buffer.getSize(); i++) {
-        printf("%d data : %hhu \n",i,buffer.getData()[i]);
         po_accept(buffer.getData()[i]); // todo propre reinterpret_cast
     }
 
@@ -401,8 +403,12 @@ void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
     po_frame(buf, &len);
 
     this->m_poStackMutex.unLock();
-
+    //printf("[PUS] size buf %u\n",len);
+    for(int i = 0;i<buffer.getSize();i++){
+        //printf("[PUS] buf : %x\n",buf[i]);
+    }
     if (len > 0) {
+        printf("[PUS] return data \n");
         extBuff.setSize(len);
         extBuff.setData(buf);
         write_out(0,extBuff);
@@ -421,17 +427,17 @@ extern "C" {
 */
 po_result_t UserPus8Fn (uint8_t fid, uint8_t *data, uint16_t len)
 {
-    printf("PUS8 User Function triggered.\n");
-    printf("Function ID = %u.\n", fid);
-     Fw::Buffer extBuff;
-     U8* dataExt = &data[1];
-     extBuff.setSize(len-1);
-     extBuff.setData(dataExt);
+    printf("[PUS8] User Function triggered with function ID = %u.\n",fid);
+    Fw::Buffer extBuff;
+    U8* dataExt = &data[1];
+    extBuff.setSize(len-1);
+    extBuff.setData(dataExt);
     groundIf.processBuffer(extBuff);
 
 
     return PO_SUCCESS;
 }
+
 
 /* -- Global functions -- */
 po_result_t subnet_request(
