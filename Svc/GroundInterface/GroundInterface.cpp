@@ -11,6 +11,7 @@
 
 #include <Fw/Com/ComPacket.hpp>
 #include <Fw/Log/LogPacket.hpp>
+#include <Fw/Tlm/TlmPacket.hpp>
 #include <Svc/GroundInterface/GroundInterface.hpp>
 #include <Svc/GroundInterface/GroundInterfaceCfg.hpp>
 #include "Fw/Types/BasicTypes.hpp"
@@ -108,6 +109,62 @@ void GroundInterfaceComponentImpl::readCallback_handler(
 #endif
 }
 
+void GroundInterfaceComponentImpl::hkReport_handler(
+        const NATIVE_INT_TYPE portNum,
+        FwChanIdType id,
+        Fw::Time &timeTag,
+        Fw::TlmBuffer &val
+) {
+    // F' variables
+    Fw::Buffer buffer;
+    U32 tlmVal;
+
+    Fw::TlmPacket m_tlmPacket;  //!< Packet buffer for assembling tlm packets
+    Fw::ComBuffer m_comBuffer;  //!< Com buffer for sending event buffers
+
+    // PUSOpen variables
+    U8 po_buf[4096];    // @todo use definition
+    U16 po_len;
+    po_result_t po_res = PO_ERR;
+
+    // printf("[PUS] Housekeeping received : %u (0x%02X)\n", id, id);
+
+    this->m_poStackMutex.lock();
+
+    /*/
+    m_tlmPacket.setId(id);
+    m_tlmPacket.setTimeTag(timeTag);
+    m_tlmPacket.setTlmBuffer(val);
+    m_comBuffer.resetSer();
+    Fw::SerializeStatus stat = m_tlmPacket.serialize(m_comBuffer);
+    FW_ASSERT(Fw::FW_SERIALIZE_OK == stat,static_cast<NATIVE_INT_TYPE>(stat));
+    //*/
+
+    // Sample - In the future serialize id and TlmBuffer
+    switch(id) {
+        case 0x29:  // (41) PR_NumPings
+            val.deserialize(tlmVal);
+            PR_NumPings = tlmVal;   
+            printf("[PUS] Housekeeping PR_NumPings received : %u \n", tlmVal);
+            // Trigger PUS 3 Service provider to generate TM[3,25]
+            po_triggerPus3();
+            break;
+    }
+
+    // Retrieve created TM[3,25] byte stream from PUSopen stack and send it
+    po_res = po_frame(po_buf, &po_len);
+
+    this->m_poStackMutex.unLock();
+
+    // If a report has been generated, send it
+    if(po_len > 0) {
+        buffer.setData(po_buf);
+        buffer.setSize(po_len);
+        printf("[PUS] Send report\n");
+        write_out(0, buffer); 
+    }
+}
+
 void GroundInterfaceComponentImpl::eventReport_handler(
         const NATIVE_INT_TYPE portNum,
         FwEventIdType id,
@@ -118,11 +175,11 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     // F' variables
     Fw::Buffer buffer;          //!< buffer to send frame to SocketIpDriver
 
-    //Fw::LogPacket m_logPacket;  //!< Packet buffer for assembling log packets
-    //Fw::ComBuffer m_comBuffer;  //!< Com buffer for sending event buffers
+    Fw::LogPacket m_logPacket;  //!< Packet buffer for assembling log packets
+    Fw::ComBuffer m_comBuffer;  //!< Com buffer for sending event buffers
 
     // PUSOpen variables
-    U8 po_buf[512];
+    U8 po_buf[4096];    // @todo use definition
     U8 po_evtData = 0;
     U16 po_len;
     po_result_t po_res = PO_ERR;
@@ -172,20 +229,24 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     m_logPacket.setId(id);
     m_logPacket.setTimeTag(timeTag);
     m_logPacket.setLogBuffer(args);
+    m_comBuffer.resetSer();
     Fw::SerializeStatus stat = m_logPacket.serialize(m_comBuffer);
     FW_ASSERT(Fw::FW_SERIALIZE_OK == stat,static_cast<NATIVE_INT_TYPE>(stat));
     //*/
-    // Sample - In the future serialize id and LogBuffer
+
+    // simple data tests
     po_evtData = id;
 
     this->m_poStackMutex.lock();
 
     // Send TM[5,x] with F' event ID = x 
-    po_res = po_pus5tm( po_pus5_eventId,    // event ID PUS[5, x]
-                        &po_evtData,        // event data
-                        GS_APID);           // destination APID (GS)
+    po_res = po_pus5tm(
+        po_pus5_eventId,            // event ID PUS[5, x]
+        &po_evtData, // m_comBuffer.getBuffAddr(),  // event data 
+        GS_APID);                   // destination APID (GS)
 
     if(po_res != PO_SUCCESS) {
+        // PO_ERR_LOWSPACE 2 No space to store input data if too small
         printf("[PUS] po error: %u\n", po_res);
         FW_ASSERT(0);
     }
@@ -203,51 +264,6 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     buffer.setData(po_buf);
     buffer.setSize(po_len);
     write_out(0, buffer);
-
-}
-
-void GroundInterfaceComponentImpl::hkReport_handler(
-        const NATIVE_INT_TYPE portNum,
-        FwChanIdType id,
-        Fw::Time &timeTag,
-        Fw::TlmBuffer &val
-) {
-    // F' variables
-    Fw::Buffer buffer;
-    U32 tlmVal;
-
-    // PUSOpen variables
-    U8 po_buf[512];
-    U16 po_len;
-    po_result_t po_res = PO_ERR;
-
-    // printf("[PUS] Housekeeping received : %u (0x%02X)\n", id, id);
-
-    this->m_poStackMutex.lock();
-
-    // Sample - In the future serialize id and TlmBuffer
-    switch(id) {
-        case 0x29:  // (41) PR_NumPings
-            val.deserialize(tlmVal);
-            PR_NumPings = tlmVal;   
-            printf("[PUS] Housekeeping PR_NumPings received : %u \n", tlmVal);
-            // Trigger PUS 3 Service provider to generate TM[3,25]
-            po_triggerPus3();
-            break;
-    }
-
-    // Retrieve created TM[3,25] byte stream from PUSopen stack and send it
-    po_res = po_frame(po_buf, &po_len);
-
-    this->m_poStackMutex.unLock();
-
-    // If a report has been generated, send it
-    if(po_len > 0) {
-        buffer.setData(po_buf);
-        buffer.setSize(po_len);
-        printf("[PUS] Send report\n");
-        write_out(0, buffer); 
-    }
 }
 
 void GroundInterfaceComponentImpl::schedIn_handler(
@@ -380,11 +396,8 @@ void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
     //printf("[PUS] service pus received \n");
     //printf("[PUS] size data %u\n",buffer.getSize());
     // Transmission buffer
-    U8 buf[512];
+    U8 buf[4096];   // @todo use definition
     U16 len;
-
-    // printf("[PUS] Data received : %u\n", buffer.getSize());
-
 
     this->m_poStackMutex.lock();
 

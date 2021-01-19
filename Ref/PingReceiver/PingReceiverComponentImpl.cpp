@@ -54,7 +54,7 @@ namespace Ref {
     )
   {
     this->log_DIAGNOSTIC_PR_PingReceived(key);
-    //this->tlmWrite_PR_NumPings(this->m_pingsRecvd++);
+    this->tlmWrite_PR_NumPings(this->m_pingsRecvd++);
     if (not this->m_inhibitPings) {
         PingOut_out(0,key);
     }

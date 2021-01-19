@@ -21,13 +21,13 @@
 /* PUSopen(R) configuration */
 
 /* PUS 1 - Size of reception buffer (in bytes) */
-#define PUS1_RECV_BUF_SIZE		512
+#define PUS1_RECV_BUF_SIZE		2048
 
 /* PUS 1 - Virtual Channel for TM[1,x] */
 #define PUS1_VCID		1
 
 /* PUS 3 - Size of buffer in which TM[3,25] report is composed (in bytes) */
-#define PUS3_REPORT_BUF_SIZE		1
+#define PUS3_REPORT_BUF_SIZE		512
 
 /* PUS 17 - Virtual Channel for TM[17,x] */
 #define PUS17_VCID		0
@@ -35,10 +35,10 @@
 #define PS_LAYER
 
 /* PS - Max size of sent packet (in bytes) */
-#define PS_MAX_SEND_PACKET_SIZE		512
+#define PS_MAX_SEND_PACKET_SIZE		2048
 
 /* PS - Max size of received packet (in bytes) */
-#define PS_MAX_RECV_PACKET_SIZE		512
+#define PS_MAX_RECV_PACKET_SIZE		2048
 
 /* PS - Checksum type */
 #define PS_PKT_CHECKSUM_TYPE		PKT_ISO16
@@ -49,13 +49,13 @@
 #define FESS_LAYER
 
 /* FESS - Size of send buffer (in bytes) */
-#define FESS_SEND_BUF_SIZE		2048
+#define FESS_SEND_BUF_SIZE		4096
 
 /* FESS - Size of reception buffer (in bytes) */
-#define FESS_RECV_BUF_SIZE		2048
+#define FESS_RECV_BUF_SIZE		4096
 
 /* FESS - Size of FESS temporary buffers (in bytes) */
-#define FESS_TEMP_BUF_SIZE		2048
+#define FESS_TEMP_BUF_SIZE		4096
 
 /* FESS - Attached Synchronization Mark (ASM) */
 #define FESS_ASM		FESS_DEF_ASM
@@ -113,8 +113,8 @@ FESS_INIT(fess, FESS_ASM, FESS_ASM_LEN, FESS_ENCODING, FESS_ENCRYPTION, FESS_SEN
 /* User Code */
 
 
-    extern po_result_t UserPus8Fn(uint8_t fid, uint8_t *data, uint16_t len);
-    extern uint32_t PR_NumPings;
+extern po_result_t UserPus8Fn(uint8_t fid, uint8_t *data, uint16_t len);
+extern uint32_t PR_NumPings;
   
 
 /* On-board Events */
