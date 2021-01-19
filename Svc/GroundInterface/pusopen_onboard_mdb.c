@@ -27,7 +27,7 @@
 #define PUS1_VCID		1
 
 /* PUS 3 - Size of buffer in which TM[3,25] report is composed (in bytes) */
-#define PUS3_REPORT_BUF_SIZE		512
+#define PUS3_REPORT_BUF_SIZE		2048
 
 /* PUS 17 - Virtual Channel for TM[17,x] */
 #define PUS17_VCID		0
@@ -49,13 +49,13 @@
 #define FESS_LAYER
 
 /* FESS - Size of send buffer (in bytes) */
-#define FESS_SEND_BUF_SIZE		4096
+#define FESS_SEND_BUF_SIZE		2048
 
 /* FESS - Size of reception buffer (in bytes) */
-#define FESS_RECV_BUF_SIZE		4096
+#define FESS_RECV_BUF_SIZE		2048
 
 /* FESS - Size of FESS temporary buffers (in bytes) */
-#define FESS_TEMP_BUF_SIZE		4096
+#define FESS_TEMP_BUF_SIZE		2048
 
 /* FESS - Attached Synchronization Mark (ASM) */
 #define FESS_ASM		FESS_DEF_ASM
@@ -124,28 +124,28 @@ po_evt_t evt[] = {
        .id = 1U,
        .level = PUS5_EVT_INFO,
        .desc = "Information event",
-       .dataLen = 1U,
+       .dataLen = 1102U,
        .vcid = 1U
    },
    {
        .id = 2U,
        .level = PUS5_EVT_LOW,
        .desc = "Low severity anomaly",
-       .dataLen = 1U,
+       .dataLen = 1102U,
        .vcid = 1U
    },
    {
        .id = 3U,
        .level = PUS5_EVT_MEDIUM,
        .desc = "Medium severity anomaly",
-       .dataLen = 1U,
+       .dataLen = 1102U,
        .vcid = 1U
    },
    {
        .id = 4U,
        .level = PUS5_EVT_HIGH,
        .desc = "High severity anomaly",
-       .dataLen = 1U,
+       .dataLen = 1102U,
        .vcid = 1U
    }
 };
@@ -218,6 +218,18 @@ po_hkreport_t hkreps[] = {
        .vcid = 0U,
        .numHk = 8U,
        .obparams = { 100 }
+   },
+   {
+       .id = 2U,
+       .name = "Report #2",
+       .desc = "Report #2 description",
+       .enabled = POTRUE,
+       .interval = 1U,
+       .sinceLast = 0U,
+       .destApid = 3U,
+       .vcid = 0U,
+       .numHk = 8U,
+       .obparams = { 100 }
    }
 };
 
@@ -240,7 +252,7 @@ po_mdbapid_t po_mdb_apid = {
 
     .numevt = 4U,
     .numparams = 42U,
-    .numreports = 1U,
+    .numreports = 2U,
     .numfct = 1U,
     .events = evt,
     .obparams = obparams,
@@ -258,7 +270,7 @@ EMPTY_PUSUSR_TM
 
 /**
  *  Default implementation of po_time to satisfy
- *  dependencies if user does not implements po_time.
+ *  dependencies if user does not implement po_time.
  */
 #ifndef PUS_CUSTOM_TIME
 EMPTY_PO_TIME
@@ -266,10 +278,26 @@ EMPTY_PO_TIME
 
 /**
  *  Default implementation of po_tc to satisfy
- *  dependencies if user does not implements po_tc.
+ *  dependencies if user does not implement po_tc.
  */
 #ifndef PUS_CUSTOM_SERVICES
 EMPTY_PO_TC
+#endif
+
+/**
+ *  Default implementation of pus13_tc to satisfy
+ *  dependencies if user does not implement pus13_tc.
+ */
+#ifndef PUS13_PROVIDER
+EMPTY_PUS13_TC
+#endif
+
+/**
+ *  Default implementation Subnetwork functions
+ *  to satisfy libps dependencies.
+ */
+#ifdef NO_SUBNET
+EMPTY_SUBNET
 #endif
 
 /* MDB format version */

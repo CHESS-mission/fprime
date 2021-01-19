@@ -31,7 +31,7 @@ Compile this xml into .c file with poconfig tool :
       <Used>true</Used>
 
       <!-- Size of buffer used to assemble TM[3,26] ([3, 25] ? ) report (in bytes) -->
-      <ReportBufferSize>512</ReportBufferSize> <!-- @todo Check with ComBuffer (TlmPacket) size ? -->
+      <ReportBufferSize>2048</ReportBufferSize> <!-- @todo Will depend on the reports sizes -->
     </Pus3>
 
     <Pus5>
@@ -60,6 +60,7 @@ Compile this xml into .c file with poconfig tool :
       
       <!-- Max size of sent/received packet (in bytes). Values: 0 to 16000 -->
       <!-- PO_ERR_TOOLONG 11 - Data too long if smaller than PusEvent DataSize -->
+      <!-- CCSDS + TM -->
       <MaxSendPacketSize>2048</MaxSendPacketSize>   
       <MaxRecvPacketSize>2048</MaxRecvPacketSize>   
       
@@ -79,12 +80,12 @@ Compile this xml into .c file with poconfig tool :
       <!-- Size of the send/receive buffer holding raw byte stream (in bytes). 
            This buffer should be large enough to accommodate at least one
            full packet or frame. -->
-      <SendBufferSize>4096</SendBufferSize>
-      <RecvBufferSize>4096</RecvBufferSize>
+      <SendBufferSize>2048</SendBufferSize>
+      <RecvBufferSize>2048</RecvBufferSize>
 
       <!-- Size of internal buffer of FESS (in bytes). There are four buffers of this
            size and they shall be large enough to accommodate encrypted packet/frame. -->
-      <TempBufferSize>4096</TempBufferSize>
+      <TempBufferSize>2048</TempBufferSize>
       
       <!-- Attached Synchronization Mark (ASM) content and length. 
            A byte field (uint8_t[]) defining content of ASM. 
@@ -140,28 +141,28 @@ Compile this xml into .c file with poconfig tool :
        <Id>1</Id>
        <Level>PUS5_EVT_INFO</Level>
        <Description>Information event</Description>
-       <DataSize>1</DataSize> <!-- 1102 for ComBuffer -->
+       <DataSize>1102</DataSize>
     </PusEvent>
 
     <PusEvent>
        <Id>2</Id>
        <Level>PUS5_EVT_LOW</Level>
        <Description>Low severity anomaly</Description>
-       <DataSize>1</DataSize> <!-- 1102 for ComBuffer -->
+       <DataSize>1102</DataSize>
     </PusEvent>
 
     <PusEvent>
        <Id>3</Id>
        <Level>PUS5_EVT_MEDIUM</Level>
        <Description>Medium severity anomaly</Description>
-       <DataSize>1</DataSize> <!-- 1102 for ComBuffer -->
+       <DataSize>1102</DataSize>
     </PusEvent>
 
     <PusEvent>
        <Id>4</Id>
        <Level>PUS5_EVT_HIGH</Level>
        <Description>High severity anomaly</Description>
-       <DataSize>1</DataSize> <!-- 1102 for ComBuffer -->
+       <DataSize>1102</DataSize>
     </PusEvent>
   </Events>
 
@@ -196,6 +197,21 @@ extern uint32_t PR_NumPings;
       <Id>1</Id>
       <Name>Report #1</Name>
       <Description>Report #1 description</Description>
+      <Enabled>true</Enabled>
+      <Interval>1</Interval>
+      <DestApid>3</DestApid>
+      <!-- <VcId>1</VcId> -->
+      <HkParamsList>
+        <HkParamId>100</HkParamId>
+      </HkParamsList>
+    </HkReport>
+  </HkReports>
+  
+  <HkReports>
+    <HkReport>
+      <Id>2</Id>
+      <Name>Report #2</Name>
+      <Description>Report #2 description</Description>
       <Enabled>true</Enabled>
       <Interval>1</Interval>
       <DestApid>3</DestApid>
