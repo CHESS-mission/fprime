@@ -17,10 +17,14 @@
 #include "Fw/Types/BasicTypes.hpp"
 #include <Os/Log.hpp>
 
+#ifdef _PUS
+#include <Os/Mutex.hpp>
 
 #include "pusopen.h"
 
 extern Svc::GroundInterfaceComponentImpl groundIf;
+extern Os::Mutex PO_STACK_MUTEX;
+#endif  // defined _PUS
 
 namespace Svc {
 
@@ -28,6 +32,7 @@ const U32 GroundInterfaceComponentImpl::MAX_DATA_SIZE = 2048;
 const TOKEN_TYPE GroundInterfaceComponentImpl::START_WORD = static_cast<TOKEN_TYPE>(0xdeadbeef);
 const U32 GroundInterfaceComponentImpl::END_WORD = static_cast<U32>(0xcafecafe);
 
+// PUSOpen global function test
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,6 +57,7 @@ GroundInterfaceComponentImpl(
 
 void GroundInterfaceComponentImpl::init(const NATIVE_INT_TYPE instance) {
     GroundInterfaceComponentBase::init(instance);
+#ifdef _PUS
     po_result_t res = PO_SUCCESS;
 
     res = po_initPus1();    // macro for pus1_reset(PO_DEF_PUS1)
@@ -62,6 +68,7 @@ void GroundInterfaceComponentImpl::init(const NATIVE_INT_TYPE instance) {
         // PUSOpen initialisation error ! Critical error with FSW
         FW_ASSERT(0);
     }
+#endif // defined _PUS
 }
 
 GroundInterfaceComponentImpl::~GroundInterfaceComponentImpl(void) {}
@@ -75,22 +82,31 @@ void GroundInterfaceComponentImpl::downlinkPort_handler(
     Fw::ComBuffer &data,
     U32 context
 ) {
-#if defined _GDS
+#ifdef _GDS
     // Downlink TM disabled
     FW_ASSERT(data.getBuffLength() <= MAX_DATA_SIZE);
     frame_send(data.getBuffAddr(), data.getBuffLength());
+#endif // defined _GDS
+
+#ifdef _PUS 
+    Fw::Buffer buffer;  //!< Com buffer for sending event buffers
+    buffer.setData(data.getBuffAddr());
+    buffer.setSize(data.getBuffCapacity());
+
+    write_out(0, buffer);
 #endif
+
 }
 
 void GroundInterfaceComponentImpl::fileDownlinkBufferSendIn_handler(
     const NATIVE_INT_TYPE portNum,
     Fw::Buffer &fwBuffer
 ) {
-#if defined _GDS
+#ifdef _GDS
     FW_ASSERT(fwBuffer.getSize() <= MAX_DATA_SIZE);
     frame_send(fwBuffer.getData(), fwBuffer.getSize(), Fw::ComPacket::FW_PACKET_FILE);
     fileDownlinkBufferSendOut_out(0, fwBuffer);
-#endif
+#endif // defined _GDS
 }
 
 void GroundInterfaceComponentImpl::readCallback_handler(
@@ -102,11 +118,28 @@ void GroundInterfaceComponentImpl::readCallback_handler(
         FW_ASSERT(0);
     }
 
-#if defined _PUS
+#ifdef _PUS
     processPUS(buffer);
 #elif defined _GDS
     processBuffer(buffer);
 #endif
+}
+
+void GroundInterfaceComponentImpl::schedIn_handler(
+    const NATIVE_INT_TYPE portNum, /*!< The port number*/
+    NATIVE_UINT_TYPE context /*!< The call order*/
+) {
+    // TODO: replace with a call to a buffer manager
+    Fw::Buffer buffer = m_ext_buffer;
+    // Call read poll if it is hooked up
+    if (isConnected_readPoll_OutputPort(0)) {
+        readPoll_out(0, buffer);
+#ifdef _PUS
+        processPUS(buffer);
+#elif defined _GDS
+        processBuffer(buffer);
+#endif
+    }
 }
 
 void GroundInterfaceComponentImpl::hkReport_handler(
@@ -115,6 +148,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
         Fw::Time &timeTag,
         Fw::TlmBuffer &val
 ) {
+#ifdef _PUS
     // F' variables
     Fw::Buffer buffer;
     U32 tlmVal;
@@ -129,7 +163,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
 
     // printf("[PUS] Housekeeping received : %u (0x%02X)\n", id, id);
 
-    this->m_poStackMutex.lock();
+    PO_STACK_MUTEX.lock();
 
     /*/
     m_tlmPacket.setId(id);
@@ -154,7 +188,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
     // Retrieve created TM[3,25] byte stream from PUSopen stack and send it
     po_res = po_frame(po_buf, &po_len);
 
-    this->m_poStackMutex.unLock();
+    PO_STACK_MUTEX.unLock();
 
     // If a report has been generated, send it
     if(po_len > 0) {
@@ -163,6 +197,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
         printf("[PUS] Send report\n");
         write_out(0, buffer); 
     }
+#endif // defined _PUS
 }
 
 void GroundInterfaceComponentImpl::eventReport_handler(
@@ -172,6 +207,7 @@ void GroundInterfaceComponentImpl::eventReport_handler(
         Fw::LogSeverity severity,
         Fw::LogBuffer &args
 ) {
+#ifdef _PUS
     // F' variables
     Fw::Buffer buffer;          //!< buffer to send frame to SocketIpDriver
 
@@ -225,7 +261,7 @@ void GroundInterfaceComponentImpl::eventReport_handler(
             po_pus5_eventId = PUS5_EVT_HIGH;
     }
 
-    /*/ Event arguments to serialize
+    // Event arguments to serialize
     m_logPacket.setId(id);
     m_logPacket.setTimeTag(timeTag);
     m_logPacket.setLogBuffer(args);
@@ -235,14 +271,14 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     //*/
 
     // simple data tests
-    po_evtData = id;
+    // po_evtData = id;
 
-    this->m_poStackMutex.lock();
+    PO_STACK_MUTEX.lock();
 
     // Send TM[5,x] with F' event ID = x 
     po_res = po_pus5tm(
         po_pus5_eventId,            // event ID PUS[5, x]
-        &po_evtData, // m_comBuffer.getBuffAddr(),  // event data 
+        m_comBuffer.getBuffAddr(),  // event data 
         GS_APID);                   // destination APID (GS)
 
     if(po_res != PO_SUCCESS) {
@@ -259,56 +295,24 @@ void GroundInterfaceComponentImpl::eventReport_handler(
         FW_ASSERT(0);
     }
 
-    this->m_poStackMutex.unLock();
+    PO_STACK_MUTEX.unLock();
 
     buffer.setData(po_buf);
     buffer.setSize(po_len);
-    write_out(0, buffer);
+    //write_out(0, buffer);
+#endif // defined _PUS
 }
 
-void GroundInterfaceComponentImpl::schedIn_handler(
-    const NATIVE_INT_TYPE portNum, /*!< The port number*/
-    NATIVE_UINT_TYPE context /*!< The call order*/
-) {
-    // TODO: replace with a call to a buffer manager
-    Fw::Buffer buffer = m_ext_buffer;
-    // Call read poll if it is hooked up
-    if (isConnected_readPoll_OutputPort(0)) {
-        readPoll_out(0, buffer);
-#if defined _PUS
-    processPUS(buffer);
-#elif defined _GDS
-    processBuffer(buffer);
-#endif
-    }
-}
+void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer) {
+    NATIVE_UINT_TYPE buffer_offset = 0;
 
-void GroundInterfaceComponentImpl::frame_send(U8 *data, TOKEN_TYPE size, TOKEN_TYPE packet_type) {
-    // TODO: replace with a call to a buffer manager
-    Fw::Buffer buffer = m_ext_buffer;
-    Fw::SerializeBufferBase& buffer_wrapper = buffer.getSerializeRepr();
-    buffer_wrapper.resetSer();
-    // True size is supplied size plus sizeof(TOKEN_TYPE) if a packet_type other than "UNKNOWN" was supplied.
-    // This is because if not UNKNOWN, the packet_type is serialized too.  Otherwise it is assumed the PACKET_TYPE is
-    // already the first token in the UNKNOWN typed buffer.
-    U32 true_size = (packet_type != Fw::ComPacket::FW_PACKET_UNKNOWN) ? size + sizeof(TOKEN_TYPE) : size;
-    // Frame format :  | START_WORD | data_size  | data  | END_WORD |
-    U32 total_size = sizeof(TOKEN_TYPE) + sizeof(TOKEN_TYPE) + true_size + sizeof(U32);
-    // Serialize data
-    FW_ASSERT(GND_BUFFER_SIZE >= total_size, GND_BUFFER_SIZE, total_size);
-    buffer_wrapper.serialize(START_WORD);
-    buffer_wrapper.serialize(static_cast<TOKEN_TYPE>(true_size));
-    // Explicitly set the packet type, if it didn't come with the data already
-    if (packet_type != Fw::ComPacket::FW_PACKET_UNKNOWN) {
-        buffer_wrapper.serialize(packet_type);
+    while (buffer_offset < buffer.getSize()) {
+        NATIVE_UINT_TYPE ser_size = (buffer.getSize() >= m_in_ring.get_remaining_size(true)) ?
+            m_in_ring.get_remaining_size(true) : static_cast<NATIVE_UINT_TYPE>(buffer.getSize());
+        m_in_ring.serialize(buffer.getData() + buffer_offset, ser_size);
+        buffer_offset = buffer_offset + ser_size;
+        processRing();
     }
-    buffer_wrapper.serialize(data, size, true);
-    buffer_wrapper.serialize(static_cast<TOKEN_TYPE>(END_WORD));
-
-    // Setup for sending by truncating unused data
-    buffer.setSize(buffer_wrapper.getBuffLength());
-    FW_ASSERT(buffer.getSize() == total_size, buffer.getSize(), total_size);
-    write_out(0, buffer);
 }
 
 void GroundInterfaceComponentImpl::routeComData() {
@@ -379,17 +383,37 @@ void GroundInterfaceComponentImpl::processRing() {
     //*/
 }
 
-void GroundInterfaceComponentImpl::processBuffer(Fw::Buffer& buffer) {
-    NATIVE_UINT_TYPE buffer_offset = 0;
-
-    while (buffer_offset < buffer.getSize()) {
-        NATIVE_UINT_TYPE ser_size = (buffer.getSize() >= m_in_ring.get_remaining_size(true)) ?
-            m_in_ring.get_remaining_size(true) : static_cast<NATIVE_UINT_TYPE>(buffer.getSize());
-        m_in_ring.serialize(buffer.getData() + buffer_offset, ser_size);
-        buffer_offset = buffer_offset + ser_size;
-        processRing();
+#ifdef _GDS
+void GroundInterfaceComponentImpl::frame_send(U8 *data, TOKEN_TYPE size, TOKEN_TYPE packet_type) {
+    // TODO: replace with a call to a buffer manager
+    Fw::Buffer buffer = m_ext_buffer;
+    Fw::SerializeBufferBase& buffer_wrapper = buffer.getSerializeRepr();
+    buffer_wrapper.resetSer();
+    // True size is supplied size plus sizeof(TOKEN_TYPE) if a packet_type other than "UNKNOWN" was supplied.
+    // This is because if not UNKNOWN, the packet_type is serialized too.  Otherwise it is assumed the PACKET_TYPE is
+    // already the first token in the UNKNOWN typed buffer.
+    U32 true_size = (packet_type != Fw::ComPacket::FW_PACKET_UNKNOWN) ? size + sizeof(TOKEN_TYPE) : size;
+    // Frame format :  | START_WORD | data_size  | data  | END_WORD |
+    U32 total_size = sizeof(TOKEN_TYPE) + sizeof(TOKEN_TYPE) + true_size + sizeof(U32);
+    // Serialize data
+    FW_ASSERT(GND_BUFFER_SIZE >= total_size, GND_BUFFER_SIZE, total_size);
+    buffer_wrapper.serialize(START_WORD);
+    buffer_wrapper.serialize(static_cast<TOKEN_TYPE>(true_size));
+    // Explicitly set the packet type, if it didn't come with the data already
+    if (packet_type != Fw::ComPacket::FW_PACKET_UNKNOWN) {
+        buffer_wrapper.serialize(packet_type);
     }
+    buffer_wrapper.serialize(data, size, true);
+    buffer_wrapper.serialize(static_cast<TOKEN_TYPE>(END_WORD));
+
+    // Setup for sending by truncating unused data
+    buffer.setSize(buffer_wrapper.getBuffLength());
+    FW_ASSERT(buffer.getSize() == total_size, buffer.getSize(), total_size);
+    write_out(0, buffer);
 }
+#endif // defined GDS
+
+#ifdef _PUS
 
 void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
  Fw::Buffer extBuff = m_ext_buffer;
@@ -399,7 +423,7 @@ void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
     U8 buf[4096];   // @todo use definition
     U16 len;
 
-    this->m_poStackMutex.lock();
+    PO_STACK_MUTEX.lock();
 
     // Push received data byte-by-byte into PUSopen(R) stack
     for(int i = 0; i < buffer.getSize(); i++) {
@@ -415,7 +439,7 @@ void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
     // Retrieve potentially created TM[17,x] byte stream from PUSopen(R) stack and send it
     po_frame(buf, &len);
 
-    this->m_poStackMutex.unLock();
+    PO_STACK_MUTEX.unLock();
     //printf("[PUS] size buf %u\n",len);
     for(int i = 0;i<buffer.getSize();i++){
         //printf("[PUS] buf : %x\n",buf[i]);
@@ -446,7 +470,6 @@ po_result_t UserPus8Fn (uint8_t fid, uint8_t *data, uint16_t len)
     extBuff.setSize(len-1);
     extBuff.setData(dataExt);
     groundIf.processBuffer(extBuff);
-
 
     return PO_SUCCESS;
 }
@@ -483,5 +506,7 @@ po_result_t subnet_indication(uint8_t * const data, uint16_t *len) {
 #ifdef __cplusplus
 }
 #endif
+
+#endif // defined _PUS
 
 } // end namespace Svc

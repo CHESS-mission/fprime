@@ -7,7 +7,6 @@
 #define GroundInterface_HPP
 
 #include <Fw/Types/Serializable.hpp>
-#include <Os/Mutex.hpp>
 
 #include "Svc/GroundInterface/GroundInterfaceComponentAc.hpp"
 #include "Utils/Types/CircularBuffer.hpp"
@@ -99,13 +98,6 @@ namespace Svc {
           const NATIVE_INT_TYPE portNum, /*!< The port number*/
           NATIVE_UINT_TYPE context /*!< The call order*/
       );
-      //! Frame and send some data
-      //!
-      void frame_send(
-          U8* data, /*!< Data to be framed and sent out */
-          TOKEN_TYPE size, /*!< Size of data in typed format */
-          TOKEN_TYPE packet_type = Fw::ComPacket::FW_PACKET_UNKNOWN /*!< Packet type override for anoymous data i.e. file downlink */
-      );
 
       //! Processes the out-going data into coms order
       void routeComData();
@@ -113,8 +105,20 @@ namespace Svc {
       //! Process all the data in the ring
       void processRing();
 
+#ifdef _GDS
+      //! Frame and send some data
+      //!
+      void frame_send(
+          U8* data, /*!< Data to be framed and sent out */
+          TOKEN_TYPE size, /*!< Size of data in typed format */
+          TOKEN_TYPE packet_type = Fw::ComPacket::FW_PACKET_UNKNOWN /*!< Packet type override for anoymous data i.e. file downlink */
+      );
+#endif // defined _GDS
+
+#ifdef _PUS
       //! Process a data buffer containing a read from the serial port
       void processPUS(Fw::Buffer& data /*!< Data to process */);
+#endif // defined _PUS
 
       // Basic data movement variables
       Fw::Buffer m_ext_buffer;
@@ -124,8 +128,6 @@ namespace Svc {
       TOKEN_TYPE m_data_size; //!< Data size expected in incoming data
       U8 m_in_buffer[GND_BUFFER_SIZE];
       Types::CircularBuffer m_in_ring;
-
-        Os::Mutex m_poStackMutex; /*!< Protect access to PUSOpen stack */
     };
 
 } // end namespace Svc

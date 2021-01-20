@@ -10,13 +10,31 @@
  * <br /><br />
  */
 #include <Svc/TlmChan/TlmChanImpl.hpp>
+#include <Svc/TlmChan/TlmTypes.hpp>
 #include <Fw/Types/BasicTypes.hpp>
 #include <Fw/Types/Assert.hpp>
 #include <Fw/Com/ComBuffer.hpp>
 #include <Fw/Tlm/TlmPacket.hpp>
+#include <Fw/Buffer/Buffer.hpp>
+
 
 #include <cstring>
 #include <stdio.h>
+
+#ifndef _GDS        // for VS synthax highlighting
+//#define _PUS
+#endif
+
+#ifdef _PUS
+#include <Os/Mutex.hpp>
+
+#include "pusopen.h"
+
+extern Os::Mutex PO_STACK_MUTEX;
+
+extern S_PO_PARAM PO_PARAM;
+
+#endif  // defined _PUS
 
 namespace Svc {
 
@@ -29,6 +47,7 @@ namespace Svc {
             this->m_tlmEntries[0].slots[entry] = 0;
             this->m_tlmEntries[1].slots[entry] = 0;
         }
+
         // clear buckets
         for (NATIVE_UINT_TYPE entry = 0; entry < TLMCHAN_HASH_BUCKETS; entry++) {
             this->m_tlmEntries[0].buckets[entry].used = false;
@@ -42,9 +61,15 @@ namespace Svc {
             this->m_tlmEntries[1].buckets[entry].next = 0;
             this->m_tlmEntries[1].buckets[entry].id = 0;
         }
+        
         // clear free index
         this->m_tlmEntries[0].free = 0;
         this->m_tlmEntries[1].free = 0;
+
+#ifdef _PUS
+        // Fot testing purpose @todo remove (or replace by loop iteration)
+        PO_PARAM.BD_Cycles = 0;
+#endif
     }
 
     TlmChanImpl::~TlmChanImpl() {}
@@ -69,6 +94,8 @@ namespace Svc {
     }
 
     void TlmChanImpl::Run_handler(NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context) {
+
+#ifdef _GDS 
         // Only write packets if connected
         if (not this->isConnected_PktSend_OutputPort(0)) {
             return;
@@ -77,7 +104,7 @@ namespace Svc {
         // lock mutex long enough to modify active telemetry buffer
         // so the data can be read without worrying about updates
         this->lock();
-        this->m_activeBuffer = 1 - this->m_activeBuffer;
+        this->m_activeBuffer = 1 - this->m_activeBuffer;    // activeBuffer is 0 or 1
         // set activeBuffer to not updated
         for (U32 entry = 0; entry < TLMCHAN_HASH_BUCKETS; entry++) {
             this->m_tlmEntries[this->m_activeBuffer].buckets[entry].updated = false;
@@ -85,11 +112,9 @@ namespace Svc {
         this->unLock();
 
         // go through each entry and send a packet if it has been updated
-
         for (U32 entry = 0; entry < TLMCHAN_HASH_BUCKETS; entry++) {
             TlmEntry* p_entry = &this->m_tlmEntries[1-this->m_activeBuffer].buckets[entry];
             if ((p_entry->updated) && (p_entry->used)) {
-#if defined _GDS 
                 this->m_tlmPacket.setId(p_entry->id);
                 this->m_tlmPacket.setTimeTag(p_entry->lastUpdate);
                 this->m_tlmPacket.setTlmBuffer(p_entry->buffer);
@@ -101,15 +126,36 @@ namespace Svc {
                 if (this->isConnected_PktSend_OutputPort(0)) {
                     this->PktSend_out(0,this->m_comBuffer,0);
                 }
-#elif defined _PUS
-                p_entry->updated = false;
-
-                if (this->isConnected_PktSend_OutputPort(0)) {
-                    this->TlmSend_out(0, p_entry->id, p_entry->lastUpdate, p_entry->buffer);
-                }
-#endif   
             }
         }
+
+#elif defined _PUS
+        // F' variables
+        U32 tlmVal;
+
+
+        // PUSOpen variables
+        U8 po_buf[4096];    // @todo use definition
+        U16 po_len;
+        po_result_t po_res = PO_ERR;
+
+        po_triggerPus3();
+
+        PO_STACK_MUTEX.lock();
+
+        po_res = po_frame(po_buf, &po_len);
+
+        PO_STACK_MUTEX.unLock();
+
+        if(po_len > 0) {
+            Fw::ComBuffer m_comBuffer(po_buf, po_len);  //!< Com buffer for sending event buffers
+            printf("[PUS] Send report\n");
+            if (this->isConnected_PktSend_OutputPort(0)) {
+                this->PktSend_out(0,m_comBuffer,0);
+            }
+        }
+#endif   
+
     }
     void TlmChanImpl::TlmRecv_handler(NATIVE_INT_TYPE portNum, FwChanIdType id, Fw::Time &timeTag, Fw::TlmBuffer &val) {
         // Compute index for entry
@@ -155,6 +201,15 @@ namespace Svc {
         entryToUse->updated = true;
         entryToUse->lastUpdate = timeTag;
         entryToUse->buffer = val;
+
+#ifdef _PUS
+    if (id == 481) {
+        U32 cycles;
+        val.deserialize(cycles);
+        PO_PARAM.BD_Cycles = cycles;
+        printf("Tlm %u val %u\n", id, cycles);
+    }
+#endif // defined _PUS
 
     }
 

@@ -188,7 +188,7 @@ namespace Svc {
                 return;
         }
 
-#if defined _GDS
+#ifdef _GDS
         if (this->isConnected_PktSend_OutputPort(0)) {
             this->PktSend_out(0, this->m_comBuffer,0);
         }
