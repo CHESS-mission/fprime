@@ -32,16 +32,6 @@ const U32 GroundInterfaceComponentImpl::MAX_DATA_SIZE = 2048;
 const TOKEN_TYPE GroundInterfaceComponentImpl::START_WORD = static_cast<TOKEN_TYPE>(0xdeadbeef);
 const U32 GroundInterfaceComponentImpl::END_WORD = static_cast<U32>(0xcafecafe);
 
-// PUSOpen global function test
-#ifdef __cplusplus
-extern "C" {
-#endif
-U32 PR_NumPings = 0;
-#ifdef __cplusplus
-}
-#endif
-
-
 // ------------------------------------- ---------------------------------
 // Construction, initialization, and destruction 
 // ----------------------------------------------------------------------
@@ -149,7 +139,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
         Fw::TlmBuffer &val
 ) {
 #ifdef _PUS
-    // F' variables
+    /*/ F' variables        -- Directly done in TlmChan TlmRecvHandler
     Fw::Buffer buffer;
     U32 tlmVal;
 
@@ -164,15 +154,6 @@ void GroundInterfaceComponentImpl::hkReport_handler(
     // printf("[PUS] Housekeeping received : %u (0x%02X)\n", id, id);
 
     PO_STACK_MUTEX.lock();
-
-    /*/
-    m_tlmPacket.setId(id);
-    m_tlmPacket.setTimeTag(timeTag);
-    m_tlmPacket.setTlmBuffer(val);
-    m_comBuffer.resetSer();
-    Fw::SerializeStatus stat = m_tlmPacket.serialize(m_comBuffer);
-    FW_ASSERT(Fw::FW_SERIALIZE_OK == stat,static_cast<NATIVE_INT_TYPE>(stat));
-    //*/
 
     // Sample - In the future serialize id and TlmBuffer
     switch(id) {
@@ -197,6 +178,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
         printf("[PUS] Send report\n");
         write_out(0, buffer); 
     }
+    //*/
 #endif // defined _PUS
 }
 
@@ -221,7 +203,7 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     po_result_t po_res = PO_ERR;
     pus5_evtId_t po_pus5_eventId = PUS5_EVT_HIGH;   // default value
 
-    printf("[PUS] Event received : %u (0x%02X)\n", id, id);
+    // printf("[PUS] Event received : %u (0x%02X)\n", id, id);
 
     /**
     ---- PUS Service 5 severity level ----
@@ -270,9 +252,6 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     FW_ASSERT(Fw::FW_SERIALIZE_OK == stat,static_cast<NATIVE_INT_TYPE>(stat));
     //*/
 
-    // simple data tests
-    // po_evtData = id;
-
     PO_STACK_MUTEX.lock();
 
     // Send TM[5,x] with F' event ID = x 
@@ -283,23 +262,30 @@ void GroundInterfaceComponentImpl::eventReport_handler(
 
     if(po_res != PO_SUCCESS) {
         // PO_ERR_LOWSPACE 2 No space to store input data if too small
-        printf("[PUS] po error: %u\n", po_res);
-        FW_ASSERT(0);
+        if (po_res == 2) {
+            printf("=== [PUS] EVT - To long frame (%u)- Not send\n", po_len);
+        } else {
+            printf("=== [PUS] EVT - po_pus5tm po error: %u\n", po_res);
+        }
+        return;
     }
 
     // Retrieve created TM[5,x] byte stream from PUSopen stack and send it
     po_res = po_frame(po_buf, &po_len);
 
     if(po_res != PO_SUCCESS) {
-        printf("[PUS] po error: %u\n", po_res);
-        FW_ASSERT(0);
+        if (po_res == 2) {
+            printf("=== [PUS] EVT - To long frame (%u)- Not send\n", po_len);
+        } else {
+            printf("=== [PUS] EVT - po_frame po error: %u\n", po_res);
+        }        return;
     }
 
     PO_STACK_MUTEX.unLock();
 
     buffer.setData(po_buf);
     buffer.setSize(po_len);
-    //write_out(0, buffer);
+    write_out(0, buffer);
 #endif // defined _PUS
 }
 

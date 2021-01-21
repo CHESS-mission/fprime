@@ -10,19 +10,18 @@
  * <br /><br />
  */
 #include <Svc/TlmChan/TlmChanImpl.hpp>
-#include <Svc/TlmChan/TlmTypes.hpp>
 #include <Fw/Types/BasicTypes.hpp>
 #include <Fw/Types/Assert.hpp>
 #include <Fw/Com/ComBuffer.hpp>
 #include <Fw/Tlm/TlmPacket.hpp>
 #include <Fw/Buffer/Buffer.hpp>
-
+#include "../../Lib/mdb/hk_param.h"
 
 #include <cstring>
 #include <stdio.h>
 
 #ifndef _GDS        // for VS synthax highlighting
-#define _PUS        // will cause compiler warning for redifinition
+//#define _PUS        // will cause compiler warning for redifinition
 #endif
 
 #ifdef _PUS
@@ -32,14 +31,16 @@
 
 extern Os::Mutex PO_STACK_MUTEX;
 
-extern S_PO_PARAM PO_PARAM;
+extern s_PARAM PARAM;
 
 #endif  // defined _PUS
 
 namespace Svc {
 
     TlmChanImpl::TlmChanImpl(const char* name) : TlmChanComponentBase(name)
-    {
+    {   
+        U16 i = 0;
+
         // clear data
         this->m_activeBuffer = 0;
         // clear slot pointers
@@ -67,8 +68,14 @@ namespace Svc {
         this->m_tlmEntries[1].free = 0;
 
 #ifdef _PUS
-        // Fot testing purpose @todo remove (or replace by loop iteration)
-        PO_PARAM.BD_Cycles = 0;
+        // Set global PUS variable with default value
+        // @todo - Find a clean way to deal with PARAM struct - Dirty code :o
+        // Works only with U32 parameters list !!
+        for(i = 0; i < PO_PARAM_SIZE; i++) {
+            U32* ptr = reinterpret_cast<U32*>(&PARAM);
+            ptr = ptr + i;
+            *ptr = (U32)0; 
+        }
 #endif
     }
 
@@ -149,9 +156,14 @@ namespace Svc {
         PO_STACK_MUTEX.unLock();
 
         if(po_len > 0) {
+            // @todo Remove - Temporary
+            if(po_len > FW_COM_BUFFER_MAX_SIZE) {
+                printf("=== [PUS] TLM - To long frame (%u)- Not send\n", po_len);
+                return;
+            }
             FW_ASSERT(po_len <= FW_COM_BUFFER_MAX_SIZE);
+            printf("TLM: (%u) Send report\n", po_len);
             Fw::ComBuffer m_comBuffer(po_buf, po_len);  //!< Com buffer for sending event buffers
-            printf("[PUS] Send report\n");
             this->PktSend_out(0,m_comBuffer,0);
         }
 #endif   
@@ -203,13 +215,24 @@ namespace Svc {
         entryToUse->buffer = val;
 
 #ifdef _PUS
-    // @todo Find a way to optimise this 
-    if (id == 481) {    // BD_cycles
-        U32 cycles;
-        val.deserialize(cycles);
-        PO_PARAM.BD_Cycles = cycles;
-        printf("Tlm %u val %u\n", id, cycles);
-    }
+        // List ids used in report #1 for PUS3 service 
+        U32 used_hk[] = {0x29, 0x79, 0x7a, 0x169, 0x1E1, 0x42f, 0x430, 0x431};
+
+        // Check received TM and update global variable for PUSOpen lib if
+        // id is used in report
+        // @todo - Find a clean way to deal with hk_param - Dirty code :o
+        // Works only with U32 parameters list !!
+        U16 i;
+        for(i = 0; i < PO_PARAM_SIZE; i++) {
+            if (used_hk[i] == id) {
+                U32 value;
+                val.deserialize(value);
+                U32* ptr = reinterpret_cast<U32*>(&PARAM);
+                ptr = ptr + i;
+                *ptr = value;
+                // printf("Tlm %u val %u\n", id, value);
+            }
+        }
 #endif // defined _PUS
 
     }
