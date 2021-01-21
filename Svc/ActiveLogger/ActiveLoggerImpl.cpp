@@ -188,14 +188,19 @@ namespace Svc {
                 return;
         }
 
+        // Send event to EventSequence
+        if (this->isConnected_LogSend_OutputPort(0)) {
+            this->LogSend_out(0, id, timeTag, static_cast<Fw::LogSeverity>(severity) , args);
+        } 
+
 #ifdef _GDS
         if (this->isConnected_PktSend_OutputPort(0)) {
             this->PktSend_out(0, this->m_comBuffer,0);
         }
 #elif defined _PUS
-        // redirect event through event output
-        if (this->isConnected_LogSend_OutputPort(0)) {
-            this->LogSend_out(0, id, timeTag, static_cast<Fw::LogSeverity>(severity) , args);
+        // Send event to GroundInterface
+        if (this->isConnected_LogSend_OutputPort(1)) {
+            this->LogSend_out(1, id, timeTag, static_cast<Fw::LogSeverity>(severity) , args);
         }
 #endif
     }

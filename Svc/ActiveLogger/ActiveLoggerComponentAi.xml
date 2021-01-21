@@ -18,7 +18,7 @@
             Telemetry input port
             </comment>
         </port>
-        <port name="LogSend" data_type="Fw::Log" kind="output" >
+        <port name="LogSend" data_type="Fw::Log" kind="output" max_number="2">
             <comment>
             Telemetry output port
             </comment>

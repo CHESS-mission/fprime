@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 #ifndef _GDS        // for VS synthax highlighting
-//#define _PUS
+#define _PUS        // will cause compiler warning for redifinition
 #endif
 
 #ifdef _PUS
@@ -95,11 +95,12 @@ namespace Svc {
 
     void TlmChanImpl::Run_handler(NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context) {
 
+    // Only write packets if connected
+    if (not this->isConnected_PktSend_OutputPort(0)) {
+        return;
+    }
+
 #ifdef _GDS 
-        // Only write packets if connected
-        if (not this->isConnected_PktSend_OutputPort(0)) {
-            return;
-        }
 
         // lock mutex long enough to modify active telemetry buffer
         // so the data can be read without worrying about updates
@@ -123,9 +124,7 @@ namespace Svc {
                 FW_ASSERT(Fw::FW_SERIALIZE_OK == stat,static_cast<NATIVE_INT_TYPE>(stat));
                 p_entry->updated = false;
 
-                if (this->isConnected_PktSend_OutputPort(0)) {
-                    this->PktSend_out(0,this->m_comBuffer,0);
-                }
+                this->PktSend_out(0,this->m_comBuffer,0);
             }
         }
 
@@ -139,6 +138,8 @@ namespace Svc {
         U16 po_len;
         po_result_t po_res = PO_ERR;
 
+        // Trigger PUS service 3 to check is report
+        // has to generated
         po_triggerPus3();
 
         PO_STACK_MUTEX.lock();
@@ -148,11 +149,10 @@ namespace Svc {
         PO_STACK_MUTEX.unLock();
 
         if(po_len > 0) {
+            FW_ASSERT(po_len <= FW_COM_BUFFER_MAX_SIZE);
             Fw::ComBuffer m_comBuffer(po_buf, po_len);  //!< Com buffer for sending event buffers
             printf("[PUS] Send report\n");
-            if (this->isConnected_PktSend_OutputPort(0)) {
-                this->PktSend_out(0,m_comBuffer,0);
-            }
+            this->PktSend_out(0,m_comBuffer,0);
         }
 #endif   
 
@@ -203,7 +203,8 @@ namespace Svc {
         entryToUse->buffer = val;
 
 #ifdef _PUS
-    if (id == 481) {
+    // @todo Find a way to optimise this 
+    if (id == 481) {    // BD_cycles
         U32 cycles;
         val.deserialize(cycles);
         PO_PARAM.BD_Cycles = cycles;
