@@ -15,7 +15,7 @@
 #include <Fw/Com/ComBuffer.hpp>
 #include <Fw/Tlm/TlmPacket.hpp>
 #include <Fw/Buffer/Buffer.hpp>
-#include "../../Lib/mdb/hk_param.h"
+#include "hk_param.h"
 
 #include <cstring>
 #include <stdio.h>
