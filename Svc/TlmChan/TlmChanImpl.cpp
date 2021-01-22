@@ -139,7 +139,7 @@ namespace Svc {
         // F' variables
         U32 tlmVal;
 
-
+        
         // PUSOpen variables
         U8 po_buf[4096];    // @todo use definition
         U16 po_len;
@@ -162,7 +162,7 @@ namespace Svc {
                 return;
             }
             FW_ASSERT(po_len <= FW_COM_BUFFER_MAX_SIZE);
-            printf("TLM: (%u) Send report\n", po_len);
+            printf("TLM: Send report (%u)\n", po_len);
             Fw::ComBuffer m_comBuffer(po_buf, po_len);  //!< Com buffer for sending event buffers
             this->PktSend_out(0,m_comBuffer,0);
         }
