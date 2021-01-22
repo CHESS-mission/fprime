@@ -158,7 +158,7 @@ namespace Svc {
         if(po_len > 0) {
             // @todo Remove - Temporary
             if(po_len > FW_COM_BUFFER_MAX_SIZE) {
-                printf("=== [PUS] TLM - To long frame (%u)- Not send\n", po_len);
+                printf("=== [PUS3] TLM - To long frame (%u)- Not send\n", po_len);
                 return;
             }
             FW_ASSERT(po_len <= FW_COM_BUFFER_MAX_SIZE);

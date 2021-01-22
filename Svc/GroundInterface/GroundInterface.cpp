@@ -151,7 +151,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
     U16 po_len;
     po_result_t po_res = PO_ERR;
 
-    // printf("[PUS] Housekeeping received : %u (0x%02X)\n", id, id);
+    // printf("[PUS3] Housekeeping received : %u (0x%02X)\n", id, id);
 
     PO_STACK_MUTEX.lock();
 
@@ -160,7 +160,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
         case 0x29:  // (41) PR_NumPings
             val.deserialize(tlmVal);
             PR_NumPings = tlmVal;   
-            printf("[PUS] Housekeeping PR_NumPings received : %u \n", tlmVal);
+            printf("[PUS3] Housekeeping PR_NumPings received : %u \n", tlmVal);
             // Trigger PUS 3 Service provider to generate TM[3,25]
             po_triggerPus3();
             break;
@@ -175,7 +175,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
     if(po_len > 0) {
         buffer.setData(po_buf);
         buffer.setSize(po_len);
-        printf("[PUS] Send report\n");
+        printf("[PUS3] Send report\n");
         write_out(0, buffer); 
     }
     //*/
@@ -203,7 +203,7 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     po_result_t po_res = PO_ERR;
     pus5_evtId_t po_pus5_eventId = PUS5_EVT_HIGH;   // default value
 
-    // printf("[PUS] Event received : %u (0x%02X)\n", id, id);
+    // printf("[PUS5] Event received : %u (0x%02X)\n", id, id);
 
     /**
     ---- PUS Service 5 severity level ----
@@ -263,9 +263,9 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     if(po_res != PO_SUCCESS) {
         // PO_ERR_LOWSPACE 2 No space to store input data if too small
         if (po_res == 2) {
-            printf("=== [PUS] EVT - To long frame (%u)- Not send\n", po_len);
+            printf("=== [PUS5] To long frame (%u)- Not send\n", po_len);
         } else {
-            printf("=== [PUS] EVT - po_pus5tm po error: %u\n", po_res);
+            printf("=== [PUS5] po_pus5tm po error: %u\n", po_res);
         }
         return;
     }
@@ -275,9 +275,9 @@ void GroundInterfaceComponentImpl::eventReport_handler(
 
     if(po_res != PO_SUCCESS) {
         if (po_res == 2) {
-            printf("=== [PUS] EVT - To long frame (%u)- Not send\n", po_len);
+            printf("=== [PUS5] To long frame (%u)- Not send\n", po_len);
         } else {
-            printf("=== [PUS] EVT - po_frame po error: %u\n", po_res);
+            printf("=== [PUS5] po_frame po error: %u\n", po_res);
         }        return;
     }
 
