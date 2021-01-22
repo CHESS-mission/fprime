@@ -101,11 +101,10 @@ namespace Svc {
     }
 
     void TlmChanImpl::Run_handler(NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context) {
-
-    // Only write packets if connected
-    if (not this->isConnected_PktSend_OutputPort(0)) {
-        return;
-    }
+        // Only write packets if connected
+        if (not this->isConnected_PktSend_OutputPort(0)) {
+            return;
+        }
 
 #ifdef _GDS 
 
@@ -158,7 +157,7 @@ namespace Svc {
         if(po_len > 0) {
             // @todo Remove - Temporary
             if(po_len > FW_COM_BUFFER_MAX_SIZE) {
-                printf("=== [PUS3] TLM - To long frame (%u)- Not send\n", po_len);
+                printf("=== [PUS3] TLM - To long frame (%u) - Not send\n", po_len);
                 return;
             }
             FW_ASSERT(po_len <= FW_COM_BUFFER_MAX_SIZE);
@@ -166,9 +165,9 @@ namespace Svc {
             Fw::ComBuffer m_comBuffer(po_buf, po_len);  //!< Com buffer for sending event buffers
             this->PktSend_out(0,m_comBuffer,0);
         }
-#endif   
-
+#endif  
     }
+
     void TlmChanImpl::TlmRecv_handler(NATIVE_INT_TYPE portNum, FwChanIdType id, Fw::Time &timeTag, Fw::TlmBuffer &val) {
         // Compute index for entry
         NATIVE_UINT_TYPE index = this->doHash(id);

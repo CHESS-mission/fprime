@@ -14,7 +14,7 @@
 #include <Fw/Tlm/TlmPacket.hpp>
 #include <Svc/GroundInterface/GroundInterface.hpp>
 #include <Svc/GroundInterface/GroundInterfaceCfg.hpp>
-#include "Fw/Types/BasicTypes.hpp"
+#include <Fw/Types/BasicTypes.hpp>
 #include <Os/Log.hpp>
 
 #ifdef _PUS
@@ -138,48 +138,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
         Fw::Time &timeTag,
         Fw::TlmBuffer &val
 ) {
-#ifdef _PUS
-    /*/ F' variables        -- Directly done in TlmChan TlmRecvHandler
-    Fw::Buffer buffer;
-    U32 tlmVal;
-
-    Fw::TlmPacket m_tlmPacket;  //!< Packet buffer for assembling tlm packets
-    Fw::ComBuffer m_comBuffer;  //!< Com buffer for sending event buffers
-
-    // PUSOpen variables
-    U8 po_buf[4096];    // @todo use definition
-    U16 po_len;
-    po_result_t po_res = PO_ERR;
-
-    // printf("[PUS3] Housekeeping received : %u (0x%02X)\n", id, id);
-
-    PO_STACK_MUTEX.lock();
-
-    // Sample - In the future serialize id and TlmBuffer
-    switch(id) {
-        case 0x29:  // (41) PR_NumPings
-            val.deserialize(tlmVal);
-            PR_NumPings = tlmVal;   
-            printf("[PUS3] Housekeeping PR_NumPings received : %u \n", tlmVal);
-            // Trigger PUS 3 Service provider to generate TM[3,25]
-            po_triggerPus3();
-            break;
-    }
-
-    // Retrieve created TM[3,25] byte stream from PUSopen stack and send it
-    po_res = po_frame(po_buf, &po_len);
-
-    PO_STACK_MUTEX.unLock();
-
-    // If a report has been generated, send it
-    if(po_len > 0) {
-        buffer.setData(po_buf);
-        buffer.setSize(po_len);
-        printf("[PUS3] Send report\n");
-        write_out(0, buffer); 
-    }
-    //*/
-#endif // defined _PUS
+        // deprecated
 }
 
 void GroundInterfaceComponentImpl::eventReport_handler(
@@ -252,8 +211,6 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     FW_ASSERT(Fw::FW_SERIALIZE_OK == stat,static_cast<NATIVE_INT_TYPE>(stat));
     //*/
 
-    PO_STACK_MUTEX.lock();
-
     // Send TM[5,x] with F' event ID = x 
     po_res = po_pus5tm(
         po_pus5_eventId,            // event ID PUS[5, x]
@@ -261,31 +218,33 @@ void GroundInterfaceComponentImpl::eventReport_handler(
         GS_APID);                   // destination APID (GS)
 
     if(po_res != PO_SUCCESS) {
-        // PO_ERR_LOWSPACE 2 No space to store input data if too small
-        if (po_res == 2) {
-            printf("=== [PUS5] To long frame (%u)- Not send\n", po_len);
-        } else {
-            printf("=== [PUS5] po_pus5tm po error: %u\n", po_res);
+        printf("=== [PUS5] po_pus5tm po error: %u\n", po_res);
+    }
+
+    while(1) {
+        PO_STACK_MUTEX.lock();
+
+        po_res = po_frame(po_buf, &po_len);
+
+        PO_STACK_MUTEX.unLock();
+
+        if(po_res != PO_SUCCESS) {
+            if (po_res == PO_ERR_NODATA) {
+                return;
+            } else {
+                printf("=== [PUS] po_frame po error: %u\n", po_res);
+            }
+            return;
         }
-        return;
+
+        if(po_len > 0) {
+            //printf("Send\n");
+            buffer.setData(po_buf);
+            buffer.setSize(po_len);
+            write_out(0, buffer);
+        }
     }
 
-    // Retrieve created TM[5,x] byte stream from PUSopen stack and send it
-    po_res = po_frame(po_buf, &po_len);
-
-    if(po_res != PO_SUCCESS) {
-        if (po_res == 2) {
-            printf("=== [PUS5] To long frame (%u)- Not send\n", po_len);
-        } else {
-            printf("=== [PUS5] po_frame po error: %u\n", po_res);
-        }        return;
-    }
-
-    PO_STACK_MUTEX.unLock();
-
-    buffer.setData(po_buf);
-    buffer.setSize(po_len);
-    write_out(0, buffer);
 #endif // defined _PUS
 }
 
@@ -408,7 +367,7 @@ void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
     // Transmission buffer
     U8 buf[4096];   // @todo use definition
     U16 len;
-
+    
     PO_STACK_MUTEX.lock();
 
     // Push received data byte-by-byte into PUSopen(R) stack
@@ -422,14 +381,19 @@ void GroundInterfaceComponentImpl::processPUS(Fw::Buffer& buffer) {
     // Forward TC[x,y] to PUS x
     po_triggerPus1();
 
+
     // Retrieve potentially created TM[17,x] byte stream from PUSopen(R) stack and send it
     po_frame(buf, &len);
 
     PO_STACK_MUTEX.unLock();
-    //printf("[PUS] size buf %u\n",len);
+
+    /*/
+    printf("[PUS] size buf %u\n",len);
     for(int i = 0;i<buffer.getSize();i++){
-        //printf("[PUS] buf : %x\n",buf[i]);
+        printf("[PUS] buf : %x\n",buf[i]);
     }
+    //*/
+
     if (len > 0) {
         printf("[PUS] return data \n");
         extBuff.setSize(len);
