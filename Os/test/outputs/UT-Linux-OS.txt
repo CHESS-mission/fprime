@@ -1,0 +1,174 @@
+test 1
+    Start 1: Os_ut_exe
+
+1: Test command: /home/jonathan/tm/CHESS/05_FS/fprime/build-fprime-automatic-native-ut/bin/Linux/Os_ut_exe
+1: Test timeout computed to be: 9.99988e+06
+1: Running OS ut tests
+1: Tick 9!
+1: Tick 8!
+1: Tick 7!
+1: Tick 6!
+1: Tick 5!
+1: Tick 4!
+1: Tick 3!
+1: Tick 2!
+1: Tick 1!
+1: Tick 0!
+1: Passed.
+1: Test complete.
+1: -----------------------------
+1: -----------------------------
+1: -----------------------------
+1: -- blocking receive test ----
+1: -----------------------------
+1: Testing successful receive after send...
+1: Passed.
+1: Testing blocking receive on queue empty with blocking send...
+1: Passed.
+1: Testing blocking receive on queue empty with nonblocking send...
+1: Passed.
+1: Test send and receive with priorities...
+1: Passed.
+1: Test complete.
+1: -----------------------------
+1: -----------------------------
+1: -----------------------------
+1: - nonblocking receive test --
+1: -----------------------------
+1: Testing successful receive after send...
+1: Passed.
+1: Testing non-blocking receive on queue empty...
+1: Passed.
+1: Test send and receive with priorities...
+1: Passed.
+1: Test complete.
+1: -----------------------------
+1: -----------------------------
+1: -----------------------------
+1: -- nonblocking send test ----
+1: -----------------------------
+1: Testing non-blocking send on queue full...
+1: Passed.
+1: Test complete.
+1: -----------------------------
+1: -----------------------------
+1: -----------------------------
+1: ---- blocking send test -----
+1: -----------------------------
+1: Testing blocking send on queue full with blocking receive...
+1: Passed.
+1: Testing blocking send on queue full nonblocking receive...
+1: Passed.
+1: Test complete.
+1: -----------------------------
+1: -----------------------------
+1: -----------------------------
+1: ---- performance test -------
+1: -----------------------------
+1: Testing shallow queue...
+1: Time: 0.752s (0.752us per)
+1: Testing deep queue...
+1: Time: 1.095s (1.095us per)
+1: Test complete.
+1: -----------------------------
+1: -----------------------------
+1: ---------------------
+1: -- concurrent test --
+1: ---------------------
+1: Testing deep queue...
+1: Time: 0.934s (18.677us per)
+1: Test complete.
+1: ---------------------
+1: ---------------------
+1: Timer launched during 1000649us
+1: Should be 1000000us
+1: Creating ./test_dir1 directory
+1: Checking directory file count of ./test_dir1 is 0.
+1: Moving directory (./test_dir1) to (./test_dir2).
+1: Trying to copy directory (./test_dir2) to (./test_dir1).
+1: Removing directory ./test_dir2
+1: Creating test file (test_file1)
+1: Writing to test file (test_file1) for testing.
+1: Checking file size of test_file1.
+1: Copying file (test_file1) to (test_file2).
+1: Removing test file 1 (test_file1)
+1: Removing test file 2 (test_file2)
+1: Getting the number of files in (.)
+1: Reading the files in (.)
+1: CTestTestfile.cmake
+1: Makefile
+1: cmake_install.cmake
+1:
+1:
+1: Changing working directory to (../)
+1: Checking current working directory is (../)
+1: Current dir: /home/jonathan/tm/CHESS/05_FS/fprime/build-fprime-automatic-native-ut/F-Prime
+1: Passed.
+1: Test complete.
+1: -----------------------------
+1: -----------------------------
+1: validateFileTest() not implemented on Linux
+1/3 Test #1: Os_ut_exe ........................   Passed   26.83 sec
+test 2
+    Start 2: Os_pthreads
+
+2: Test command: /home/jonathan/tm/CHESS/05_FS/fprime/build-fprime-automatic-native-ut/bin/Linux/Os_pthreads
+2: Test timeout computed to be: 9.99988e+06
+2: Creating queue.
+2: Test empty queue...
+2: Passed.
+2: Test full queue...
+2: Pushing 0.
+2: Pushing 1.
+2: Pushing 2.
+2: Pushing 3.
+2: Pushing 4.
+2: Passed.
+2: Test weird size...
+2: Passed.
+2: Test pop...
+2: Popping 5.
+2: Popping 4.
+2: Popping 3.
+2: Popping 2.
+2: Popping 1.
+2: Passed.
+2: Test priorities...
+2: Pushing 'hello' at priority 9.
+2: Pushing 'how are you' at priority 4.
+2: Pushing 'pretty good' at priority 100.
+2: Pushing 'cosmic bro' at priority 4.
+2: Pushing 'kthxbye' at priority 9.
+2: Popped 'pretty good' at priority 100. Expected 'pretty good' at priority 100.
+2: Popped 'hello' at priority 9. Expected 'hello' at priority 9.
+2: Popped 'kthxbye' at priority 9. Expected 'kthxbye' at priority 9.
+2: Popped 'how are you' at priority 4. Expected 'how are you' at priority 4.
+2: Popped 'cosmic bro' at priority 4. Expected 'cosmic bro' at priority 4.
+2: Passed.
+2: Test done.
+2/3 Test #2: Os_pthreads ......................   Passed    0.02 sec
+test 3
+    Start 3: Os_pthreads_max_heap
+
+3: Test command: /home/jonathan/tm/CHESS/05_FS/fprime/build-fprime-automatic-native-ut/bin/Linux/Os_pthreads_max_heap
+3: Test timeout computed to be: 9.99988e+06
+3: Creating heap.
+3: Testing empty...
+3: Passed.
+3: Testing push...
+3: Passed.
+3: Testing pop...
+3: Passed.
+3: Testing random...
+3: Passed.
+3: Testing no priority...
+3: Passed.
+3: Testing mixed priority...
+3: Passed.
+3: Test done.
+3/3 Test #3: Os_pthreads_max_heap .............   Passed    0.02 sec
+
+100% tests passed, 0 tests failed out of 3
+
+Total Test time (real) =  26.87 sec
+[100%] Built target Os_check

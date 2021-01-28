@@ -112,7 +112,7 @@ void fillQueue(Os::Queue* queue) {
 }
 
 void drainQueue(Os::Queue* queue) {
-    // Fill the queue.
+    // Drain the queue.
     // Note this loop should only need to go to QUEUE_SIZE,
     // but the SysV queues don't actually have a size, so
     // instead we loop until we get a queue full response:
@@ -308,7 +308,7 @@ void qtest_block_receive(void) {
     globalQueue = NULL;
     printf("Passed.\n");
 
-    // TEST 5
+    // TEST 4
     printf("Test send and receive with priorities...\n");
     // Send messages with mixed priorities,
     // and make sure we get back the buffers in

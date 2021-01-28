@@ -2,6 +2,22 @@
 #include <unistd.h>
 #include <stdio.h>
 
+/*
+ * OSAL tests have to be launched manually for FreeRTOSSim
+ *
+ * fprime/Os ❯ fprime-util build --ut -j 8 // to build OSAL tests 
+ * fprime/Os ❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe [testNb] // to run them
+ *
+ * [testNb] in fprime/Os/test/ut/TestMain.cpp
+ * Current results : 
+ *   Test 6 qtest_concurrent(): Seg fault
+ *   Other tests passed
+ * 
+ * For Linux
+ * fprime/Os ❯ fu build --ut -j 8
+ * fprime/OS ❯ fu check
+*/
+
 #if defined TGT_OS_TYPE_LINUX || TGT_OS_TYPE_DARWIN
 extern "C" {
   void startTestTask(int iters);

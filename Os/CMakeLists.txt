@@ -111,16 +111,6 @@ endif()
 
 ### UTS ### Note: 3 separate UTs registered here.
 if(${PLATFORM} STREQUAL "FreeRTOSSim") 
-  # OSAL tests have to be launched manually for FreeRTOSSim
-  #
-  # fprime/Os ❯ fprime-util build --ut -j 8 // to build OSAL tests 
-  # fprime/Os ❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe [testNb] // to run them
-  #
-  # [testNb] in fprime/Os/test/ut/TestMain.cpp
-  # Current results : 
-  #   Test 6 qtest_concurrent(): Seg fault
-  #   Other tests passed
-
   set(UT_SOURCE_FILES
   "${CMAKE_CURRENT_LIST_DIR}/test/ut/TestMain.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test/ut/OsQueueTest.cpp"

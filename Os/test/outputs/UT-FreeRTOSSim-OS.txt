@@ -1,0 +1,138 @@
+❯ fu build --ut -j 8
+[WARNING] Failed to find settings file: /home/jonathan/tm/CHESS/05_FS/fprime/settings.ini
+[ 14%] Built target codegen
+[ 14%] Built target gtest
+[ 28%] Built target freertos
+[ 28%] Built target Fw_Cfg
+[ 42%] Built target gtest_main
+[ 57%] Built target Fw_Types
+[ 57%] Built target Fw_Logger
+[ 57%] Built target Utils_Hash
+[ 85%] Built target Os
+Scanning dependencies of target Os_ut_exe
+[ 85%] Building CXX object F-Prime/Os/CMakeFiles/Os_ut_exe.dir/test/ut/TestMain.o
+[100%] Linking CXX executable ../../bin/FreeRTOSSim/Os_ut_exe
+[100%] Built target Os_ut_exe
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 0
+Running OS ut tests
+Running test 0
+[T_ATestTask] Task sucessfully created
+Tick 4!
+Tick 3!
+Tick 2!
+Tick 1!
+Tick 0!
+Passed.
+Test complete.
+-----------------------------
+-----------------------------
+[FreeRTOS] Stop and relaunch program to check next test
+^C
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 1
+Running OS ut tests
+Running test 1
+-----------------------------
+-- blocking receive test ----
+-----------------------------
+---[/Q_TestQ] Create queue: depth 10, msgSize 100
+Testing successful receive after send...
+Passed.
+Testing blocking receive on queue empty with blocking send...
+Passed.
+Testing blocking receive on queue empty with nonblocking send...
+Passed.
+Test send and receive with priorities...
+Passed.
+Test complete.
+-----------------------------
+-----------------------------
+[FreeRTOS] Stop and relaunch program to check next test
+^C
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 2
+Running OS ut tests
+Running test 2
+-----------------------------
+- nonblocking receive test --
+-----------------------------
+---[/Q_TestQ] Create queue: depth 10, msgSize 100
+Testing successful receive after send...
+Passed.
+Testing non-blocking receive on queue empty...
+Passed.
+Test send and receive with priorities...
+Passed.
+Test complete.
+-----------------------------
+-----------------------------
+[FreeRTOS] Stop and relaunch program to check next test
+^C
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 3
+Running OS ut tests
+Running test 3
+-----------------------------
+-- nonblocking send test ----
+-----------------------------
+---[/Q_TestQ] Create queue: depth 10, msgSize 100
+Testing non-blocking send on queue full...
+Passed.
+Test complete.
+-----------------------------
+-----------------------------
+[FreeRTOS] Stop and relaunch program to check next test
+^C
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 4
+Running OS ut tests
+Running test 4
+-----------------------------
+---- blocking send test -----
+-----------------------------
+---[/Q_TestQ] Create queue: depth 10, msgSize 100
+Testing blocking send on queue full with blocking receive...
+Passed.
+Testing blocking send on queue full nonblocking receive...
+Passed.
+Test complete.
+-----------------------------
+-----------------------------
+[FreeRTOS] Stop and relaunch program to check next test
+^C
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 5
+Running OS ut tests
+Running test 5
+-----------------------------
+---- performance test -------
+-----------------------------
+---[/Q_TestQ] Create queue: depth 10, msgSize 100
+Testing shallow queue...
+Time: 53.984s (53.984us per)
+Testing deep queue...
+Time: 54.416s (54.416us per)
+Test complete.
+-----------------------------
+-----------------------------
+[FreeRTOS] Stop and relaunch program to check next test
+^C
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 6
+Running OS ut tests
+Running test 6
+---------------------
+-- concurrent test --
+---------------------
+---[/Q_TestQ] Create queue: depth 10, msgSize 100
+Testing deep queue...
+[1]    23217 segmentation fault (core dumped)  ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 6
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 7
+Running OS ut tests
+Running test 7
+Timer launched during 1000000us
+Should be 1000000us
+[FreeRTOS] Stop and relaunch program to check next test
+^C
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 8
+Running OS ut tests
+Running test 8
+No file system on FreeRTOS
+❯ ../build-fprime-automatic-native-ut/bin/FreeRTOSSim/Os_ut_exe 9
+Running OS ut tests
+Running test 9
+No file system on FreeRTOS
