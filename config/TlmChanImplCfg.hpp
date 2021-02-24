@@ -17,7 +17,7 @@
 
 
 // The parameters below provide for tuning of the hash function used to
-// write and read entries in the database. The has function is very simple;
+// write and read entries in the database. The hash function is very simple;
 // It first takes the telemetry ID and does a modulo computation with
 // TLMCHAN_HASH_MOD_VALUE. It then does a second modulo with the number
 // of slots to make sure the value lands in the provided slots.

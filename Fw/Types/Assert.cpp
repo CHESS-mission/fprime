@@ -12,9 +12,9 @@
 #else
 
 #if FW_ASSERT_LEVEL == FW_FILEID_ASSERT
-#define fileIdFs "Assert file ID 0x%08X:%d "
+#define fileIdFs "============= Assert file ID 0x%08X:%d ============="
 #else
-#define fileIdFs "Assert file \"%s\":%d "
+#define fileIdFs "============= Assert file \"%s\":%d ============="
 #endif
 
 namespace Fw {

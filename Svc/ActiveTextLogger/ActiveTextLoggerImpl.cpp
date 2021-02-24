@@ -94,7 +94,7 @@ namespace Svc {
 
             stat = snprintf(textStr,
                             FW_INTERNAL_INTERFACE_STRING_MAX_SIZE,
-                            "EVENT: (%d) (%04d-%02d-%02dT%02d:%02d:%02d.%03u) %s: %s\n",
+                            "EVENT: (0x%x) (%04d-%02d-%02dT%02d:%02d:%02d.%03u) %s: %s\n",
                             id, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
                             tm.tm_min,tm.tm_sec,timeTag.getUSeconds(),
                             severityString,text.toChar());
@@ -103,7 +103,7 @@ namespace Svc {
 
             stat = snprintf(textStr,
                             FW_INTERNAL_INTERFACE_STRING_MAX_SIZE,
-                            "EVENT: (%d) (%d:%d,%d) %s: %s\n",
+                            "EVENT: (0x%x) (%d:%d,%d) %s: %s\n",
                             id,timeTag.getTimeBase(),timeTag.getSeconds(),timeTag.getUSeconds(),severityString,text.toChar());
         }
 

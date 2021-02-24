@@ -25,8 +25,14 @@ namespace Svc {
     void FatalHandlerComponentImpl::FatalReceive_handler(
             const NATIVE_INT_TYPE portNum,
             FwEventIdType Id) {
+
+        // @todo REMOVE FOR DEBUG PURPOSE
+        if(Id == 0x16a) {   // HLTH_PING_LATE - when EPS not connected
+            return;
+        }
+
         // for **nix, delay then exit with error code
-        Fw::Logger::logMsg("FATAL %d handled.\n",(U32)Id,0,0,0,0,0);
+        Fw::Logger::logMsg("============= FATAL event 0x%x handled ============= \n",(U32)Id,0,0,0,0,0);
         (void)Os::Task::delay(1000);
         Fw::Logger::logMsg("Exiting.\n",0,0,0,0,0,0);
         (void)raise( SIGSEGV );

@@ -64,7 +64,8 @@ namespace Svc {
     }
 
     void ActiveLoggerImpl::LogRecv_handler(NATIVE_INT_TYPE portNum, FwEventIdType id, Fw::Time &timeTag, Fw::LogSeverity severity, Fw::LogBuffer &args) {
-
+        if (id != 0x2a) 
+            return;
         // make sure ID is not zero. Zero is reserved for ID filter.
         FW_ASSERT(id != 0);
 
@@ -187,15 +188,22 @@ namespace Svc {
                 FW_ASSERT(0,static_cast<NATIVE_INT_TYPE>(severity));
                 return;
         }
-        
+
+        // Send event to EventSequence
+        if (this->isConnected_LogSend_OutputPort(0)) {
+            this->LogSend_out(0, id, timeTag, static_cast<Fw::LogSeverity>(severity) , args);
+        } 
+
+#ifdef _GDS
         if (this->isConnected_PktSend_OutputPort(0)) {
             this->PktSend_out(0, this->m_comBuffer,0);
         }
-
-        // redirect event through event output
-        if (this->isConnected_LogSend_OutputPort(0)) {
-            this->LogSend_out(0, id, timeTag, static_cast<Fw::LogSeverity>(severity) , args);
+#elif defined _PUS
+        // Send event to GroundInterface
+        if (this->isConnected_LogSend_OutputPort(1)) {
+            this->LogSend_out(1, id, timeTag, static_cast<Fw::LogSeverity>(severity) , args);
         }
+#endif
     }
 
     void ActiveLoggerImpl::ALOG_SET_EVENT_REPORT_FILTER_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, InputFilterLevel FilterLevel, InputFilterEnabled FilterEnable) {

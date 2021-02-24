@@ -74,3 +74,6 @@ GTestBase.*
 /Fw/Python/src/fprime.egg-info
 /Gds/src/fprime_gds.egg-info
 **/DefaultDict/serializable/*
+
+# Clone CHESS-mission/pusopen as "Lib" in fprime root - Due to license restriction with PUSOpen
+Lib    # disable to allow VSCode to index Lib file

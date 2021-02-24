@@ -19,7 +19,6 @@
 #include <Fw/Tlm/TlmPacket.hpp>
 
 namespace Svc {
-
     class TlmChanImpl: public TlmChanComponentBase {
         public:
             friend class TlmChanImplTester;
@@ -30,12 +29,10 @@ namespace Svc {
                     NATIVE_INT_TYPE instance /*!< The instance number*/
                     );
         PROTECTED:
-
             // can be overridden for alternate algorithms
             virtual NATIVE_UINT_TYPE doHash(FwChanIdType id);
 
         PRIVATE:
-
             // Port functions
             void TlmRecv_handler(NATIVE_INT_TYPE portNum, FwChanIdType id, Fw::Time &timeTag, Fw::TlmBuffer &val);
             void TlmGet_handler(NATIVE_INT_TYPE portNum, FwChanIdType id, Fw::Time &timeTag, Fw::TlmBuffer &val);
@@ -47,6 +44,16 @@ namespace Svc {
                 U32 key /*!< Value to return to pinger*/
             );
 
+            U32 m_activeBuffer; // !< which buffer is active for storing telemetry
+    	    // can be 1 or 2 and will define m_tlmEntries[index]
+
+            // work variables
+            Fw::ComBuffer m_comBuffer;
+            Fw::TlmPacket m_tlmPacket;
+
+            U32 defaultTlmValue;
+
+        public:
             typedef struct tlmEntry {
                 FwChanIdType id; //!< telemetry id stored in slot
                 bool updated; //!< set whenever a value has been written. Used to skip if writing out values for downlinking
@@ -62,15 +69,7 @@ namespace Svc {
                 TlmEntry buckets[TLMCHAN_HASH_BUCKETS]; //!< set of buckets used in hash table
                 NATIVE_INT_TYPE free; //!< next free bucket
             } m_tlmEntries[2];
-
-            U32 m_activeBuffer; // !< which buffer is active for storing telemetry
-
-            // work variables
-            Fw::ComBuffer m_comBuffer;
-            Fw::TlmPacket m_tlmPacket;
-
     };
-
 }
 
 #endif /* TELEMCHANIMPL_HPP_ */

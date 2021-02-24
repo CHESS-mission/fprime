@@ -3,11 +3,13 @@
 // \author lestarch
 // \brief  hpp file for GroundInterface component implementation class
 // ====================================================================== 
-#include <Fw/Types/Serializable.hpp>
-#include "Svc/GroundInterface/GroundInterfaceComponentAc.hpp"
-#include "Utils/Types/CircularBuffer.hpp"
 #ifndef GroundInterface_HPP
 #define GroundInterface_HPP
+
+#include <Fw/Types/Serializable.hpp>
+
+#include "Svc/GroundInterface/GroundInterfaceComponentAc.hpp"
+#include "Utils/Types/CircularBuffer.hpp"
 
 #define GND_BUFFER_SIZE 1024
 #define TOKEN_TYPE U32
@@ -22,6 +24,7 @@ namespace Svc {
       static const U32 MAX_DATA_SIZE;
       static const TOKEN_TYPE START_WORD;
       static const U32 END_WORD;
+      void processBuffer(Fw::Buffer& data /*!< Data to process */);
       // ----------------------------------------------------------------------
       // Construction, initialization, and destruction
       // ----------------------------------------------------------------------
@@ -56,6 +59,25 @@ namespace Svc {
           U32 context /*!< Call context value; meaning chosen by user*/
       );
 
+      //! Handler implementation for eventReport
+      //!
+      void eventReport_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          FwEventIdType id, /*!< Log ID*/
+          Fw::Time &timeTag, /*!< Time Tag*/
+          Fw::LogSeverity severity, /*!< The severity argument*/
+          Fw::LogBuffer &args /*!< Buffer containing serialized log entry*/
+      );
+
+      //! Handler implementation for hkReport
+      //!
+      void hkReport_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          FwChanIdType id, /*!< Telemetry Channel ID*/
+          Fw::Time &timeTag, /*!< Time Tag*/
+          Fw::TlmBuffer &val /*!< Buffer containing serialized telemetry value*/
+      );
+        
       //! Handler implementation for fileDownlinkBufferSendIn
       //!
       void fileDownlinkBufferSendIn_handler(
@@ -76,13 +98,6 @@ namespace Svc {
           const NATIVE_INT_TYPE portNum, /*!< The port number*/
           NATIVE_UINT_TYPE context /*!< The call order*/
       );
-      //! Frame and send some data
-      //!
-      void frame_send(
-          U8* data, /*!< Data to be framed and sent out */
-          TOKEN_TYPE size, /*!< Size of data in typed format */
-          TOKEN_TYPE packet_type = Fw::ComPacket::FW_PACKET_UNKNOWN /*!< Packet type override for anoymous data i.e. file downlink */
-      );
 
       //! Processes the out-going data into coms order
       void routeComData();
@@ -90,12 +105,25 @@ namespace Svc {
       //! Process all the data in the ring
       void processRing();
 
+#ifdef _GDS
+      //! Frame and send some data
+      //!
+      void frame_send(
+          U8* data, /*!< Data to be framed and sent out */
+          TOKEN_TYPE size, /*!< Size of data in typed format */
+          TOKEN_TYPE packet_type = Fw::ComPacket::FW_PACKET_UNKNOWN /*!< Packet type override for anoymous data i.e. file downlink */
+      );
+#endif // defined _GDS
+
+#ifdef _PUS
       //! Process a data buffer containing a read from the serial port
-      void processBuffer(Fw::Buffer& data /*!< Data to process */);
+      void processPUS(Fw::Buffer& data /*!< Data to process */);
+#endif // defined _PUS
 
       // Basic data movement variables
       Fw::Buffer m_ext_buffer;
       U8 m_buffer[GND_BUFFER_SIZE];
+
       // Input variables
       TOKEN_TYPE m_data_size; //!< Data size expected in incoming data
       U8 m_in_buffer[GND_BUFFER_SIZE];

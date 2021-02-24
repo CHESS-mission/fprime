@@ -43,7 +43,7 @@ namespace Svc {
                 severityString = "SEVERITY ERROR";
                 break;
         }
-        Fw::Logger::logMsg("EVENT: (%d) (%d:%d,%d) %s: %s\n",
+        Fw::Logger::logMsg("EVENT: (0x%x) (%d:%d,%d) %s: %s\n",
                 id, timeTag.getTimeBase(), timeTag.getSeconds(), timeTag.getUSeconds(),
                 reinterpret_cast<POINTER_CAST>(severityString), reinterpret_cast<POINTER_CAST>(text.toChar()));
     }
