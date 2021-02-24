@@ -144,11 +144,11 @@ namespace Svc {
         U16 po_len;
         po_result_t po_res = PO_ERR;
 
+        PO_STACK_MUTEX.lock();
+
         // Trigger PUS service 3 to check is report
         // has to generated
         po_triggerPus3();
-
-        PO_STACK_MUTEX.lock();
 
         po_res = po_frame(po_buf, &po_len);
 

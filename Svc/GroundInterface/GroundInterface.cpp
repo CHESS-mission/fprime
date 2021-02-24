@@ -26,6 +26,10 @@ extern Svc::GroundInterfaceComponentImpl groundIf;
 extern Os::Mutex PO_STACK_MUTEX;
 #endif  // defined _PUS
 
+#ifndef _GDS
+#define _PUS     // for VSCode synthax, will cause compiler warning for redefinition
+#endif
+
 namespace Svc {
 
 const U32 GroundInterfaceComponentImpl::MAX_DATA_SIZE = 2048;
@@ -138,7 +142,7 @@ void GroundInterfaceComponentImpl::hkReport_handler(
         Fw::Time &timeTag,
         Fw::TlmBuffer &val
 ) {
-        // deprecated
+        // deprecated (defined by F')
 }
 
 void GroundInterfaceComponentImpl::eventReport_handler(
@@ -210,6 +214,8 @@ void GroundInterfaceComponentImpl::eventReport_handler(
     Fw::SerializeStatus stat = m_logPacket.serialize(m_comBuffer);
     FW_ASSERT(Fw::FW_SERIALIZE_OK == stat,static_cast<NATIVE_INT_TYPE>(stat));
     //*/
+    
+    PO_STACK_MUTEX.lock();
 
     // Send TM[5,x] with F' event ID = x 
     po_res = po_pus5tm(
@@ -221,20 +227,16 @@ void GroundInterfaceComponentImpl::eventReport_handler(
         printf("=== [PUS5] po_pus5tm po error: %u\n", po_res);
     }
 
-    while(1) {
-        PO_STACK_MUTEX.lock();
-
+    while(1) {  // @todo avoid endless loop
         po_res = po_frame(po_buf, &po_len);
-
-        PO_STACK_MUTEX.unLock();
 
         if(po_res != PO_SUCCESS) {
             if (po_res == PO_ERR_NODATA) {
-                return;
+                break;
             } else {
                 printf("=== [PUS] po_frame po error: %u\n", po_res);
             }
-            return;
+            break;
         }
 
         if(po_len > 0) {
@@ -244,6 +246,8 @@ void GroundInterfaceComponentImpl::eventReport_handler(
             write_out(0, buffer);
         }
     }
+
+    PO_STACK_MUTEX.unLock();
 
 #endif // defined _PUS
 }

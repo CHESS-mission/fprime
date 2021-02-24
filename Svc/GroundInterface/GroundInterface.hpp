@@ -77,7 +77,7 @@ namespace Svc {
           Fw::Time &timeTag, /*!< Time Tag*/
           Fw::TlmBuffer &val /*!< Buffer containing serialized telemetry value*/
       );
-
+        
       //! Handler implementation for fileDownlinkBufferSendIn
       //!
       void fileDownlinkBufferSendIn_handler(
