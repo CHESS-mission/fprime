@@ -64,8 +64,10 @@ namespace Svc {
     }
 
     void ActiveLoggerImpl::LogRecv_handler(NATIVE_INT_TYPE portNum, FwEventIdType id, Fw::Time &timeTag, Fw::LogSeverity severity, Fw::LogBuffer &args) {
-        if (id != 0x2a) 
-            return;
+        // Filter event for demo
+        //if (id != 0x2a) 
+        //    return;
+
         // make sure ID is not zero. Zero is reserved for ID filter.
         FW_ASSERT(id != 0);
 
