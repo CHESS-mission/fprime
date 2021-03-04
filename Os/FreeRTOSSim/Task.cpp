@@ -55,7 +55,7 @@ Task::TaskStatus Task::start(const Fw::StringBase& name,
     switch (stat) {
         case pdPASS:
             Task::s_numTasks++;
-            printf("[%s] Task sucessfully created\n", this->m_name.toChar());
+            printf("[FreeRTOS OSAL] Task successfully created: %s (stackSize stackSize)\n", this->m_name.toChar());
             return TASK_OK;
             break;
         case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:

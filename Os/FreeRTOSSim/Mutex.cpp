@@ -1,5 +1,7 @@
 #include <Fw/Types/Assert.hpp>
 #include <Os/Mutex.hpp>
+#include <stdio.h>
+
 
 #include "FreeRTOS.h"
 #include "semphr.h"
@@ -12,6 +14,7 @@ Mutex::Mutex(void) {
     xSemaphore = xSemaphoreCreateMutex();
     FW_ASSERT(xSemaphore != NULL);
     this->m_handle = (POINTER_CAST)xSemaphore;
+    printf("[FreeRTOS OSAL] Mutex successfully created\n");
 }
 
 Mutex::~Mutex(void) {

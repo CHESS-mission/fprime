@@ -29,8 +29,8 @@ Queue::QueueStatus Queue::createInternal(const Fw::StringBase &name,
     this->m_name = "/Q_";
     this->m_name += name;
 
-    printf("---[%s] Create queue: depth %u, msgSize %u\n", this->m_name.toChar(), depth,
-           msgSize);
+    //printf("---[%s] Create queue: depth %u, msgSize %u\n", this->m_name.toChar(), depth,
+    //       msgSize);
 
     queueHandle = xQueueCreate(depth, msgSize + sizeof(msgSize));
 
@@ -45,7 +45,8 @@ Queue::QueueStatus Queue::createInternal(const Fw::StringBase &name,
         if (this->msg_buffer == NULL) {
             return QUEUE_UNINITIALIZED;
         }
-
+        printf("[FreeRTOS OSAL] Queue successfully created: %s (depth %u, msgSize %u)\n",
+         this->m_name.toChar(), depth, msgSize);
         return QUEUE_OK;
     }
 
